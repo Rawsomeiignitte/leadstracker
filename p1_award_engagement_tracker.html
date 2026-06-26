@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rawsome 1000 Tracker</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f1;color:#1a1a1a}
+.topbar{background:#111;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:10px}
+.logo{font-size:15px;font-weight:700;white-space:nowrap}
+.logo span{color:#b5841a}
+.save-badge{font-size:11px;color:#b5841a;font-weight:600;min-width:120px}
+.topbar-btns{display:flex;gap:8px;flex-shrink:0}
+.btn{padding:7px 14px;border-radius:7px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.btn-gold{background:#b5841a;color:#fff}
+.btn-dark{background:#333;color:#fff}
+.tabs{background:#fff;border-bottom:2px solid #e8e8e8;display:flex;padding:0 20px;position:sticky;top:48px;z-index:99}
+.tab{padding:12px 18px;font-size:13px;font-weight:600;color:#999;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:inherit}
+.tab.on{color:#b5841a;border-bottom-color:#b5841a}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+.panel{display:none}.panel.on{display:block}
+
+/* Stats bar */
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.sbox{background:#fff;border:1px solid #e4e4e4;border-radius:9px;padding:10px 14px;text-align:center;flex:1;min-width:90px}
+.snum{font-size:22px;font-weight:800;color:#b5841a}
+.slbl{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.toolbar input,.toolbar select{border:1px solid #ddd;border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit;background:#fff}
+.toolbar input{flex:1;min-width:160px}
+.toolbar input:focus,.toolbar select:focus{outline:none;border-color:#b5841a}
+
+/* Cards */
+.grid{display:grid;gap:8px}
+.card{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:14px 16px}
+.card.dim{opacity:.5}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.card-name{font-size:14px;font-weight:700}
+.card-badges{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+.bdg{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700}
+.b-love{background:#fde8e8;color:#c03030}
+.b-like{background:#e8eeff;color:#2a4acc}
+.b-cmt{background:#f0e8ff;color:#6a20c0}
+.edit-btn{font-size:11px;padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.edit-btn:hover{border-color:#b5841a;color:#b5841a}
+.card select{width:100%;border:1px solid #eee;border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;background:#fafaf8;margin-bottom:7px;cursor:pointer}
+.card select:focus{outline:none;border-color:#b5841a}
+.card textarea{width:100%;border:1px solid #eee;border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:48px;background:#fafaf8}
+.card textarea:focus{outline:none;border-color:#b5841a}
+.card textarea::placeholder{color:#ccc}
+.saved-flash{font-size:10px;color:#28a745;font-weight:700;margin-top:3px;height:14px}
+.checks-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0}
+.chk-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#555;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid #eee;background:#fafaf8;transition:.15s;user-select:none}
+.chk-item:hover{border-color:#b5841a55;background:#fffbf2}
+.chk-item.ck-green{background:#f0fdf0;border-color:#2d7a2d55;color:#1a5c1a;font-weight:600}
+.chk-item.ck-gold{background:#fffbf0;border-color:#b5841a55;color:#7a5010;font-weight:600}
+.chk-item.ck-blue{background:#f0f4ff;border-color:#2a4acc55;color:#1a2a8a;font-weight:600}
+.chk-box{width:14px;height:14px;border:1.5px solid #ccc;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;background:#fff}
+.chk-item.ck-green .chk-box{background:#28a745;border-color:#28a745;color:#fff}
+.chk-item.ck-gold .chk-box{background:#b5841a;border-color:#b5841a;color:#fff}
+.chk-item.ck-blue .chk-box{background:#2a4acc;border-color:#2a4acc;color:#fff}
+.sec-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#bbb;margin-top:8px;margin-bottom:3px}
+.pipeline-checks{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:6px 0}
+.pip-chk{display:flex;align-items:center;gap:6px;font-size:11px;color:#555;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid #eee;background:#fafaf8;user-select:none;transition:.12s}
+.pip-chk:hover{border-color:#b5841a44;background:#fffbf2}
+.pip-chk.pc-on{background:#f0fdf0;border-color:#2d7a2d55;color:#1a5c1a;font-weight:600}
+.pip-chk.pc-gold{background:#fffbf0;border-color:#b5841a55;color:#7a5010;font-weight:600}
+.pip-chk.pc-red{background:#fff0f0;border-color:#dc354533;color:#8a2020;font-weight:600}
+.pip-chk.pc-blue{background:#f0f4ff;border-color:#2a4acc44;color:#1a2a8a;font-weight:600}
+.pip-chk.pc-purple{background:#f5f0ff;border-color:#6a20c044;color:#4a0a9a;font-weight:600}
+.pc-box{width:14px;height:14px;border:1.5px solid #ccc;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;background:#fff}
+.pip-chk.pc-on .pc-box{background:#28a745;border-color:#28a745;color:#fff}
+.pip-chk.pc-gold .pc-box{background:#b5841a;border-color:#b5841a;color:#fff}
+.pip-chk.pc-red .pc-box{background:#dc3545;border-color:#dc3545;color:#fff}
+.pip-chk.pc-blue .pc-box{background:#2a4acc;border-color:#2a4acc;color:#fff}
+.pip-chk.pc-purple .pc-box{background:#6a20c0;border-color:#6a20c0;color:#fff}
+.pip-divider{grid-column:1/-1;height:1px;background:#f0f0f0;margin:2px 0}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:14px}
+.fg{margin-bottom:12px}
+.fg label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#777;display:block;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#b5841a}
+.fg textarea{resize:vertical;min-height:80px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.btn-red{background:#dc3545;color:#fff}
+.btn-gray{background:#eee;color:#444}
+
+/* Summary */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.scard{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:16px}
+.scard h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:12px}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f5f5f5}
+.srow:last-child{border:none}
+.srow-label{font-size:12px;color:#555}
+.srow-num{font-size:14px;font-weight:800;color:#1a1a1a}
+.sbar{height:3px;background:#f0f0f0;border-radius:2px;margin-top:3px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:2px;transition:.4s}
+.big-num{text-align:center;padding:16px 0}
+.big-num .n{font-size:44px;font-weight:800;color:#b5841a;line-height:1}
+.big-num .l{font-size:11px;color:#aaa;text-transform:uppercase;margin-top:4px}
+.big-num .s{font-size:11px;color:#bbb;margin-top:2px}
+.pitem{display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed #f0f0f0;align-items:flex-start}
+.pitem:last-child{border:none}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.pname{font-size:13px;font-weight:600}
+.pnote{font-size:11px;color:#888;margin-top:1px}
+.empty-state{color:#bbb;text-align:center;padding:2rem;font-size:13px}
+.va-card{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.pipeline-bar{display:flex;gap:2px;margin:8px 0;align-items:center}
+.pip-step{flex:1;height:5px;border-radius:3px;background:#eee;position:relative;transition:.3s}
+.pip-step.done{background:#28a745}
+.pip-step.current{background:#b5841a}
+.pip-step.dead{background:#ddd}
+.pip-label{font-size:9px;color:#b5841a;font-weight:700;margin-top:3px;text-align:center}
+.pipeline-wrap{margin:6px 0 8px}
+.va-name{font-size:15px;font-weight:700;margin-bottom:6px}
+.va-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.va-field label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#aaa;display:block;margin-bottom:3px}
+.va-field input,.va-field select{width:100%;border:1px solid #eee;border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;background:#fafaf8}
+.va-field input:focus,.va-field select:focus{outline:none;border-color:#b5841a}
+.va-notes{width:100%;border:1px solid #eee;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;background:#fafaf8;margin-bottom:6px}
+.va-notes:focus{outline:none;border-color:#b5841a}
+.va-checks{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.va-flash{font-size:10px;color:#28a745;font-weight:700;height:14px}
+.event-card{background:#fff;border:1px solid #e4e4e4;border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.event-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.event-title{font-size:15px;font-weight:700}
+.event-meta{font-size:12px;color:#888;margin-top:3px}
+.event-btns{display:flex;gap:6px;flex-shrink:0}
+.event-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.ev-stat{background:#f7f6f3;border:1px solid #eee;border-radius:8px;padding:6px 12px;text-align:center;min-width:70px}
+.ev-stat-num{font-size:18px;font-weight:800;color:#b5841a}
+.ev-stat-lbl{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.04em}
+.attendee-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
+.attendee-card{background:#f7f6f3;border:1px solid #eee;border-radius:8px;padding:8px 10px;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.attendee-name{font-weight:600;font-size:12px}
+.ev-status-badge{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;white-space:nowrap}
+.ev-invited{background:#e3f2fd;color:#0d47a1}
+.ev-confirmed{background:#c8e6c9;color:#1b5e20}
+.ev-maybe{background:#fff3e0;color:#e65100}
+.ev-declined{background:#f5f5f5;color:#888}
+.ev-attended{background:#b5841a22;color:#7a5010;font-weight:800}
+.attend-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid #eee;background:#fafaf8;font-size:11px;font-weight:600;color:#555;transition:.15s;flex-shrink:0;user-select:none}
+.attend-toggle:hover{border-color:#b5841a55;background:#fffbf2}
+.attend-toggle.on{background:#fffbf0;border-color:#b5841a;color:#7a5010}
+.attend-toggle .att-box{width:14px;height:14px;border:1.5px solid #ccc;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#fff;flex-shrink:0}
+.attend-toggle.on .att-box{background:#b5841a;border-color:#b5841a;color:#fff}
+.attend-section{margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0}
+.attend-section-title{font-size:10px;font-weight:700;text-transform:uppercase;color:#b5841a;letter-spacing:.05em;margin-bottom:8px}
+.attend-list{display:flex;flex-wrap:wrap;gap:6px}
+.attend-chip{background:#fffbf0;border:1px solid #b5841a44;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:#7a5010}
+.invite-item{background:#fff;border:1px solid #eee;border-radius:8px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.invite-item-name{font-size:13px;font-weight:600}
+.invite-status-sel{font-size:11px;border:1px solid #ddd;border-radius:6px;padding:4px 8px;font-family:inherit;background:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">🏆 <span>Rawsome</span> 1000 Tracker</div>
+  <div class="save-badge" id="saveBadge"></div>
+  <div class="topbar-btns">
+    <button class="btn btn-dark" onclick="exportCSV()">📋 Export</button>
+    <button class="btn btn-gold" onclick="openAdd()">+ Add Lead</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="showTab('leads',this)">📋 Leads</button>
+  <button class="tab" onclick="showTab('summary',this)">📊 Summary</button>
+    <button class="tab" onclick="showTab('events',this)">📅 Events</button>
+    <button class="tab" onclick="showTab('va',this)">🌟 Super VA Leads</button>
+</div>
+
+<div class="wrap">
+  <!-- LEADS PANEL -->
+  <div class="panel on" id="panel-leads">
+    <div class="stats" id="statsRow"></div>
+    <div class="toolbar">
+      <input type="text" id="searchQ" placeholder="🔍 Search name or notes..." oninput="render()">
+      <select id="fStatus" onchange="render()">
+        <option value="">All Statuses</option>
+        <option value="new">🆕 New</option>
+        <option value="msg1_sent">💬 Message Sent</option>
+        <option value="replied">✅ Replied</option>
+        <option value="recording_sent">🎥 Recording Sent</option>
+        <option value="invited">📅 Invited to Call</option>
+        <option value="confirmed">✅ Confirmed for Call</option>
+        <option value="attended">⭐ Attended Call</option>
+        <option value="nurture_12k">🌱 Nurturing for $12K</option>
+        <option value="converted">🏆 Rawsome 1000 / $12K</option>
+        <option value="not_available">❌ Not Available</option>
+        <option value="not_interested">✗ Not Interested</option>
+        <option value="deactivated">🚫 Deactivated</option>
+      </select>
+      <select id="fReact" onchange="render()">
+        <option value="">All Reactions</option>
+        <option value="love">❤️ Love</option>
+        <option value="like">👍 Like</option>
+        <option value="comment">💬 Commented</option>
+      </select>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- SUMMARY PANEL -->
+  <div class="panel" id="panel-summary">
+    <div id="summaryContent"></div>
+  </div>
+  <!-- VA PANEL -->
+  <div class="panel" id="panel-va">
+    <div id="vaContent"></div>
+  </div>
+
+  <!-- EVENTS PANEL -->
+  <div class="panel" id="panel-events">
+    <div id="eventsContent"></div>
+  </div>
+</div>
+
+<!-- Event Modal -->
+<div class="overlay" id="eventOverlay" style="display:none" onclick="if(event.target===this)closeEventModal()">
+  <div class="modal">
+    <h2 id="eventModalTitle">Add New Event</h2>
+    <input type="hidden" id="eMId">
+    <div class="fg"><label>Event Name</label><input type="text" id="eMName" placeholder="e.g. Rawsome Academy — July Group Call"></div>
+    <div class="fg"><label>Date</label><input type="date" id="eMDate"></div>
+    <div class="fg"><label>Time</label><input type="text" id="eMTime" placeholder="e.g. 7:30AM SG / 9:30PM EST"></div>
+    <div class="fg"><label>Platform / Link</label><input type="text" id="eMLink" placeholder="e.g. Zoom link or Facebook Live"></div>
+    <div class="fg"><label>Notes</label><textarea id="eMNotes" placeholder="Any extra details..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn btn-gray" onclick="closeEventModal()">Cancel</button>
+      <button class="btn btn-red" id="eDelBtn" onclick="deleteEvent()" style="display:none">Delete Event</button>
+      <button class="btn btn-gold" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="overlay" id="inviteOverlay" style="display:none" onclick="if(event.target===this)closeInviteModal()">
+  <div class="modal" style="max-width:560px">
+    <h2 id="inviteModalTitle">Manage Invites</h2>
+    <input type="hidden" id="iMEventId">
+    <div style="margin-bottom:8px">
+      <input type="text" id="inviteSearch" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit" placeholder="🔍 Search leads..." oninput="renderInviteList()">
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="fb" onclick="setInviteFilter('',this)" id="ifAll" style="padding:4px 12px;border-radius:20px;border:1px solid #b5841a;color:#b5841a;font-size:11px;background:#fffbf2;font-weight:700;cursor:pointer;font-family:inherit">All</button>
+      <button class="fb" onclick="setInviteFilter('invited',this)" style="padding:4px 12px;border-radius:20px;border:1px solid #ddd;color:#777;font-size:11px;background:#fff;cursor:pointer;font-family:inherit">📩 Invited</button>
+      <button class="fb" onclick="setInviteFilter('confirmed',this)" style="padding:4px 12px;border-radius:20px;border:1px solid #ddd;color:#777;font-size:11px;background:#fff;cursor:pointer;font-family:inherit">✅ Confirmed</button>
+      <button class="fb" onclick="setInviteFilter('attended',this)" style="padding:4px 12px;border-radius:20px;border:1px solid #ddd;color:#777;font-size:11px;background:#fff;cursor:pointer;font-family:inherit">⭐ Attended</button>
+    </div>
+    <input type="hidden" id="inviteFilter">
+    <div id="inviteList" style="max-height:420px;overflow-y:auto;display:grid;gap:6px"></div>
+    <div class="modal-btns"><button class="btn btn-gold" onclick="closeInviteModal()">Done</button></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modalTitle">Add Lead</h2>
+    <input type="hidden" id="mId">
+    <div class="fg"><label>Name</label><input type="text" id="mName" placeholder="Full name"></div>
+    <div class="fg"><label>Reaction</label>
+      <select id="mReaction">
+        <option value="love">❤️ Love</option>
+        <option value="like">👍 Like</option>
+      </select>
+    </div>
+    <div class="fg"><label>Commented on Post?</label>
+      <select id="mCommented">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+    <div class="fg"><label>Status</label>
+      <select id="mStatus">
+        <option value="new">🆕 New</option>
+        <option value="msg1_sent">💬 Message Sent</option>
+        <option value="replied">✅ Replied</option>
+        <option value="recording_sent">🎥 Recording Sent</option>
+        <option value="invited">📅 Invited to Call</option>
+        <option value="confirmed">✅ Confirmed for Call</option>
+        <option value="attended">⭐ Attended Call</option>
+        <option value="nurture_12k">🌱 Nurturing for $12K</option>
+        <option value="converted">🏆 Rawsome 1000 / $12K</option>
+        <option value="not_available">❌ Not Available</option>
+        <option value="not_interested">✗ Not Interested</option>
+        <option value="deactivated">🚫 Deactivated</option>
+      </select>
+    </div>
+    <div class="fg"><label>Notes</label><textarea id="mNotes" placeholder="e.g. Interested in coaching, follow up Friday..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-red" id="mDel" onclick="deleteLead()" style="display:none">Delete</button>
+      <button class="btn btn-gold" onclick="saveLead()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'r1000_leads_v3';
+// Simplified pipeline — in sequence order
+const STATUS_LABELS = {
+  new:'🆕 New',
+  msg1_sent:'💬 Message Sent',
+  replied:'✅ Replied',
+  recording_sent:'🎥 Recording Sent',
+  invited:'📅 Invited to Call',
+  confirmed:'✅ Confirmed for Call',
+  attended:'⭐ Attended Call',
+  nurture_12k:'🌱 Nurturing for $12K',
+  converted:'🏆 Rawsome 1000 / $12K',
+  not_available:'❌ Not Available',
+  not_interested:'✗ Not Interested',
+  deactivated:'🚫 Deactivated',
+};
+
+// Maps old statuses to new simplified ones
+const STATUS_MAP_LEGACY = {
+  engage_posts:'replied', june20_invited:'invited', june20_accepted:'confirmed',
+  june20_maybe:'invited', checking_schedule:'invited', checking_timezone:'invited',
+  friday_invited:'invited', friday_accepted:'confirmed', friday_calendar:'confirmed',
+  waiting_email:'replied',
+};
+
+// Ordered pipeline stages (for progress display)
+const PIPELINE = ['new','msg1_sent','replied','recording_sent','invited','confirmed','attended','nurture_12k','converted'];
+const PIPELINE_LABELS = ['New','Msg Sent','Replied','Recording','Invited','Confirmed','Attended','Nurture $12K','$12K / R1000'];
+const STATUS_COLORS = {
+  new:'#bbb', msg1_sent:'#2a4acc', replied:'#28a745',
+  recording_sent:'#a05000', invited:'#0a5a9a', confirmed:'#1b5e20',
+  attended:'#e65100', nurture_12k:'#6a20c0', converted:'#b5841a',
+  not_available:'#888', not_interested:'#999', deactivated:'#8a0000',
+};
+const INACTIVE = ['not_available','not_interested','deactivated'];
+
+// Normalize legacy statuses on load
+function normalizeLegacyStatus(status) {
+  return STATUS_MAP_LEGACY[status] || status;
+}
+
+const INITIAL = [{"id": 1, "name": "Promise Gabriel", "reaction": "like", "commented": true, "status": "checking_schedule", "attending": true, "notes": "", "msg1_sent": true}, {"id": 2, "name": "Faith Draper LeLievre", "reaction": "like", "commented": true, "status": "engage_posts", "attending": false, "notes": "", "msg1_sent": true}, {"id": 3, "name": "Camille Beausoleil", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 4, "name": "Chaudhry Sajid", "reaction": "like", "commented": true, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 5, "name": "Nicola Mc Glynn", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 6, "name": "Sheila Patt", "reaction": "like", "commented": true, "status": "friday_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 7, "name": "Tuula Fai", "reaction": "like", "commented": false, "status": "june20_accepted", "attending": true, "notes": "", "msg1_sent": true}, {"id": 8, "name": "Reuben Rancourt", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 9, "name": "Richard Que", "reaction": "like", "commented": false, "status": "not_available", "attending": true, "notes": "", "msg1_sent": true}, {"id": 10, "name": "Allecia Maine", "reaction": "like", "commented": false, "status": "friday_accepted", "attending": false, "notes": "", "msg1_sent": true}, {"id": 11, "name": "Zeb Kai Kok Lim", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 12, "name": "Jason Bradshaw", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 13, "name": "Ajmal Theodore Khan", "reaction": "like", "commented": false, "status": "friday_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 14, "name": "Allison Leonard Rappaport", "reaction": "like", "commented": false, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 15, "name": "Otto Fong", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 16, "name": "Xrene Wong", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 17, "name": "Lisa Chong", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 18, "name": "Foo Chong", "reaction": "like", "commented": false, "status": "not_interested", "attending": false, "notes": "", "msg1_sent": true}, {"id": 19, "name": "Aaron Lim", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 20, "name": "Natalie Duncan", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 21, "name": "Dorz Doll", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 22, "name": "Marc Riemer", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 23, "name": "Billy Tan", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 24, "name": "Julie Adamo", "reaction": "like", "commented": false, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 25, "name": "Terence Lai", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 26, "name": "Chin M C Mkt", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 27, "name": "Nadezhda Khvorostian", "reaction": "like", "commented": true, "status": "june20_accepted", "attending": true, "notes": "", "msg1_sent": true}, {"id": 28, "name": "\u5929\u751f\u8d56", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 29, "name": "Joshua Toh", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 30, "name": "Ranguru Jeremy", "reaction": "like", "commented": false, "status": "june20_accepted", "attending": false, "notes": "", "msg1_sent": true}, {"id": 31, "name": "Jamie Humphris", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 32, "name": "Caleb Bowen Eliason", "reaction": "like", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 33, "name": "Mohamed Saad", "reaction": "like", "commented": true, "status": "deactivated", "attending": false, "notes": "", "msg1_sent": true}, {"id": 34, "name": "Philippa Holding", "reaction": "love", "commented": false, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 35, "name": "Maite Barbe", "reaction": "love", "commented": true, "status": "not_available", "attending": false, "notes": "", "msg1_sent": true}, {"id": 36, "name": "Kezia Luckett", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 37, "name": "Samira Neuhaus", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 38, "name": "Prashant Sheth", "reaction": "love", "commented": true, "status": "june20_accepted", "attending": false, "notes": "", "msg1_sent": true}, {"id": 39, "name": "Marianne McGuire", "reaction": "love", "commented": true, "status": "not_interested", "attending": false, "notes": "", "msg1_sent": true}, {"id": 40, "name": "Jennifer Grant", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 41, "name": "Twee Shaw", "reaction": "love", "commented": true, "status": "not_available", "attending": true, "notes": "", "msg1_sent": true}, {"id": 42, "name": "Helena Soh-Chin", "reaction": "love", "commented": true, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 43, "name": "Junie Soe", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 44, "name": "Gina Couture", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 45, "name": "Evangelia Kolaitis", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 46, "name": "Carol McGregor", "reaction": "love", "commented": true, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 47, "name": "Jeremy Asriel", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 48, "name": "JJ Raschel", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 49, "name": "Kimberly Shane", "reaction": "love", "commented": false, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 50, "name": "Candice Auld", "reaction": "love", "commented": false, "status": "not_available", "attending": false, "notes": "", "msg1_sent": true}, {"id": 51, "name": "Annika Nilson", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 52, "name": "Ksenia Cuenco", "reaction": "love", "commented": true, "status": "june20_accepted", "attending": false, "notes": "", "msg1_sent": true}, {"id": 53, "name": "Irene M Gathuru", "reaction": "love", "commented": true, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 54, "name": "Dang Tam", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 55, "name": "Dee Wells", "reaction": "love", "commented": false, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 56, "name": "Sue Rouillard High", "reaction": "love", "commented": true, "status": "not_available", "attending": true, "notes": "", "msg1_sent": true}, {"id": 57, "name": "Maria Maksymytz", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 58, "name": "Naya Lizarraga", "reaction": "love", "commented": true, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 59, "name": "Archie Sharma", "reaction": "love", "commented": true, "status": "june20_maybe", "attending": false, "notes": "", "msg1_sent": true}, {"id": 60, "name": "Albina Porracin", "reaction": "love", "commented": true, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 61, "name": "Sandy Esparon", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 62, "name": "Jesse Cloud", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 63, "name": "Liz Rankin", "reaction": "love", "commented": true, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 64, "name": "Armanda Ho", "reaction": "love", "commented": true, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 65, "name": "Ann M Kesselman", "reaction": "love", "commented": false, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": true}, {"id": 66, "name": "Rene\u00e9 Van Eeden", "reaction": "love", "commented": true, "status": "checking_timezone", "attending": false, "notes": "", "msg1_sent": true}, {"id": 67, "name": "Stacy Phoenix", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 68, "name": "Teresa Wolfe", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 69, "name": "Altheus Lovee", "reaction": "love", "commented": true, "status": "june20_invited", "attending": false, "notes": "", "msg1_sent": false}, {"id": 70, "name": "Miguel Angelo Rosales", "reaction": "love", "commented": false, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 71, "name": "Debbie Gray", "reaction": "love", "commented": false, "status": "june20_invited", "attending": true, "notes": "", "msg1_sent": true}, {"id": 72, "name": "Sheree Millar", "reaction": "love", "commented": true, "status": "june20_invited", "attending": true, "notes": "", "msg1_sent": true}, {"id": 73, "name": "Dick Lam", "reaction": "love", "commented": true, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 74, "name": "Aimee Emejas", "reaction": "love", "commented": false, "status": "june20_maybe", "attending": false, "notes": "", "msg1_sent": true}, {"id": 75, "name": "Lori A. Hood", "reaction": "love", "commented": true, "status": "msg1_sent", "attending": true, "notes": "", "msg1_sent": true}, {"id": 76, "name": "Rodney J Valentin", "reaction": "love", "commented": false, "status": "new", "attending": false, "notes": "", "msg1_sent": false}, {"id": 77, "name": "Sohayla Smith", "reaction": "love", "commented": false, "status": "checking_timezone", "attending": false, "notes": "", "msg1_sent": true}, {"id": 78, "name": "Nathan Goode", "reaction": "love", "commented": true, "status": "june20_maybe", "attending": false, "notes": "", "msg1_sent": true}, {"id": 79, "name": "Lisa Clausen", "reaction": "love", "commented": true, "status": "msg1_sent", "attending": false, "notes": "", "msg1_sent": true}, {"id": 80, "name": "Jackie M Cheng", "reaction": "love", "commented": false, "status": "friday_accepted", "attending": false, "notes": "", "msg1_sent": false}, {"id": 81, "name": "TJ Shimeld", "reaction": "love", "commented": false, "status": "june20_accepted", "attending": false, "notes": "", "msg1_sent": false}];
+
+let leads = [];
+
+// ── STORAGE ──────────────────────────────────────────
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+  showSaved();
+}
+
+function showSaved() {
+  const el = document.getElementById('saveBadge');
+  const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  el.textContent = '✓ Saved at ' + t;
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      leads = JSON.parse(raw);
+      // Add any new INITIAL leads not yet in storage
+      const names = new Set(leads.map(l => l.name.toLowerCase()));
+      INITIAL.forEach(function(l, i) {
+        if (!names.has(l.name.toLowerCase())) {
+          leads.push({id: 'i' + i, name: l.name, reaction: l.reaction,
+            commented: l.commented, status: l.status || 'msg1_sent',
+            notes: '', msg1_sent: l.msg1_sent, updatedAt: Date.now()});
+        }
+      });
+    } else {
+      leads = INITIAL.map(function(l, i) {
+        return {id: i+1, name: l.name, reaction: l.reaction,
+          commented: l.commented, status: l.status || 'msg1_sent',
+          notes: '', msg1_sent: l.msg1_sent, updatedAt: Date.now()};
+      });
+      save();
+    }
+  } catch(e) {
+    console.error('Load error:', e);
+    leads = INITIAL.map(function(l, i) {
+      return {id: i+1, name: l.name, reaction: l.reaction,
+        commented: l.commented, status: l.status || 'msg1_sent',
+        notes: '', msg1_sent: l.msg1_sent, updatedAt: Date.now()};
+    });
+  }
+  render();
+  renderStats();
+}
+
+// ── RENDER LEADS ─────────────────────────────────────
+function getFiltered() {
+  var q = document.getElementById('searchQ').value.toLowerCase();
+  var fs = document.getElementById('fStatus').value;
+  var fr = document.getElementById('fReact').value;
+  return leads.filter(function(l) {
+    if (q && l.name.toLowerCase().indexOf(q) < 0 && (l.notes||'').toLowerCase().indexOf(q) < 0) return false;
+    if (fs && l.status !== fs) return false;
+    if (fr === 'love' && l.reaction !== 'love') return false;
+    if (fr === 'like' && l.reaction !== 'like') return false;
+    if (fr === 'comment' && !l.commented) return false;
+    return true;
+  });
+}
+
+function pipChk(lid, field, val, label, colorCls) {
+  var cls = val ? 'pip-chk ' + colorCls : 'pip-chk';
+  return '<div class="' + cls + ' pip-chk-item" data-id="' + lid + '" data-field="' + field + '" data-color="' + colorCls + '">' +
+    '<div class="pc-box">' + (val ? '&#10003;' : '') + '</div><span>' + label + '</span></div>';
+}
+
+function chkBox(lid, field, val, label, color) {
+  var cls = val ? 'chk-item ck-' + color : 'chk-item';
+  var tick = val ? '&#10003;' : '';
+  return '<div class="' + cls + '" data-id="' + lid + '" data-field="' + field + '" data-color="' + color + '">' +
+    '<div class="chk-box">' + tick + '</div><span>' + label + '</span></div>';
+}
+
+function render() {
+  renderStats();
+  var filtered = getFiltered();
+  var grid = document.getElementById('grid');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty-state">No leads found.</div>';
+    return;
+  }
+  var html = '';
+  filtered.forEach(function(lead) {
+    var dim = INACTIVE.indexOf(lead.status) >= 0 ? ' dim' : '';
+    var color = STATUS_COLORS[lead.status] || '#999';
+    var sLabel = STATUS_LABELS[lead.status] || lead.status;
+    html += '<div class="card' + dim + '" id="card-' + lead.id + '" data-id="' + lead.id + '">';
+    html += '<div class="card-head">';
+    html += '<div>';
+    html += '<div class="card-name">' + escHtml(lead.name) + '</div>';
+    html += '<div class="card-badges">';
+    if (lead.reaction === 'love') html += '<span class="bdg b-love">❤️ Love</span>';
+    else html += '<span class="bdg b-like">👍 Like</span>';
+    if (lead.commented) html += '<span class="bdg b-cmt">💬 Commented</span>';
+
+    html += '</div></div>';
+    html += '<button class="edit-btn">✏️ Edit</button>';
+    html += '</div>';
+    html += '<div style="margin-bottom:6px">';
+    html += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#aaa;margin-bottom:3px">📍 Lead Source</div>';
+    html += '<textarea class="lead-source-inp" data-id="' + lead.id + '" placeholder="Where did this lead come from? e.g. P1 Award Post, liked my reel, FB Group referral..." rows="2" style="width:100%;border:1px solid #eee;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;background:#fafaf8;resize:none">' + escHtml(lead.lead_source||'') + '</textarea>';
+    html += '</div>';
+    html += '<textarea class="notes-ta" placeholder="Add notes here...">' + escHtml(lead.notes||'') + '</textarea>';
+    html += '<div class="sec-lbl">Journey Tracker</div>';
+    // Section 1: Engagement
+    html += '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#2a4acc;margin:4px 0 3px">— Engagement —</div>';
+    html += '<div class="pipeline-checks">';
+    html += pipChk(lead.id,'step_new',lead.step_new,'🆕 New','pc-on');
+    html += pipChk(lead.id,'step_chat_sent',lead.step_chat_sent,'💬 Initial Chat Sent','pc-on');
+    html += pipChk(lead.id,'step_ongoing',lead.step_ongoing,'✅ Ongoing Chat','pc-on');
+    html += pipChk(lead.id,'step_recording',lead.step_recording,'🎥 Recording Sent','pc-blue');
+    html += pipChk(lead.id,'step_invited',lead.step_invited,'📅 Invited to Call','pc-blue');
+    html += pipChk(lead.id,'step_confirmed',lead.step_confirmed,'✅ Confirmed for Call','pc-on');
+    html += pipChk(lead.id,'step_attended',lead.step_attended,'⭐ Attended Call','pc-gold');
+    html += pipChk(lead.id,'step_offered_97',lead.step_offered_97,'💛 Offered Ignite $97/m','pc-gold');
+    html += '</div>';
+    // Section 2: Conversion
+    html += '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#6a20c0;margin:6px 0 3px">— Conversion —</div>';
+    html += '<div class="pipeline-checks">';
+    html += pipChk(lead.id,'step_r1000',lead.step_r1000,'🏆 Signed Rawsome 1000 ($97/m)','pc-gold');
+    html += pipChk(lead.id,'step_nurture_12k',lead.step_nurture_12k,'🌱 Nurturing for $12K','pc-purple');
+    html += pipChk(lead.id,'step_12k',lead.step_12k,'💰 Upgraded to $12K','pc-purple');
+    html += '</div>';
+    // Section 3: Outcome
+    html += '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#dc3545;margin:6px 0 3px">— Other Outcomes —</div>';
+    html += '<div class="pipeline-checks">';
+    html += pipChk(lead.id,'step_declined',lead.step_declined,'❌ Declined Offer','pc-red');
+    html += pipChk(lead.id,'step_followup',lead.step_followup,'🔄 Follow Up for Later','pc-blue');
+    html += pipChk(lead.id,'step_cold',lead.step_cold,'🧊 Cold Lead / No Response','pc-red');
+    html += '</div>';
+    // Legacy tracking checkboxes
+    html += '<div class="sec-lbl" style="margin-top:8px">Admin</div>';
+    html += '<div class="checks-grid">';
+    html += chkBox(lead.id,'ignite_sent',lead.ignite_sent,'📧 Ignite Welcome Email Sent','green');
+    html += chkBox(lead.id,'in_fb_chat',lead.in_fb_chat,'💬 In FB Ignite Group Chat','green');
+    html += chkBox(lead.id,'in_fb_group',lead.in_fb_group,'👥 In FB Revolution Group','green');
+    html += chkBox(lead.id,'lead_magnet_sent',lead.lead_magnet_sent,'📄 1-Page Free Ignite Sent','blue');
+    html += '</div>';
+    html += '<div class="saved-flash" id="flash-' + lead.id + '"></div>';
+    html += '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function renderStats() {
+  var total = leads.length;
+  var signed12k = leads.filter(function(l){ return l.signed_12k; }).length;
+  var nurture12k = leads.filter(function(l){ return l.nurture_12k; }).length;
+  var contacted = leads.filter(function(l){ return l.status && l.status !== 'new'; }).length;
+  var jun20 = leads.filter(function(l){ return l.status === 'june20_accepted'; }).length;
+  var converted = leads.filter(function(l){ return l.status === 'converted'; }).length;
+  var inactive = leads.filter(function(l){ return INACTIVE.indexOf(l.status) >= 0; }).length;
+  document.getElementById('statsRow').innerHTML =
+    stat(total, 'Total') + stat(contacted, 'Contacted') + stat(signed12k, '💰 $12K', '#b5841a') + stat(nurture12k, '🌱 Nurture', '#28a745') +
+    stat(jun20, 'Jun 20 ✅', '#0d47a1') + stat(converted, '🏆 R1000', '#b5841a') +
+    stat(inactive, 'Inactive', '#888');
+}
+
+function stat(n, l, c) {
+  return '<div class="sbox"><div class="snum"' + (c?' style="color:'+c+'"':'') + '>' + n + '</div><div class="slbl">' + l + '</div></div>';
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── UPDATE ────────────────────────────────────────────
+function updateStatus(id, status) {
+  var lead = findLead(id);
+  if (!lead) return;
+  lead.status = status;
+  lead.updatedAt = Date.now();
+  save();
+  flash(id);
+}
+
+function updateNotes(id, notes) {
+  var lead = findLead(id);
+  if (!lead) return;
+  lead.notes = notes;
+  lead.updatedAt = Date.now();
+  save();
+  flash(id);
+}
+
+function flash(id) {
+  var el = document.getElementById('flash-' + id);
+  if (el) { el.textContent = '✓ Saved'; setTimeout(function(){ el.textContent=''; }, 1500); }
+}
+
+function findLead(id) {
+  // Compare as both string and number
+  return leads.find(function(l){ return String(l.id) === String(id); });
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function openAdd() {
+  document.getElementById('modalTitle').textContent = 'Add New Lead';
+  document.getElementById('mId').value = '';
+  document.getElementById('mName').value = '';
+  document.getElementById('mReaction').value = 'love';
+  document.getElementById('mCommented').value = '0';
+  document.getElementById('mStatus').value = 'new';
+  document.getElementById('mNotes').value = '';
+  document.getElementById('mDel').style.display = 'none';
+  document.getElementById('overlay').style.display = 'flex';
+}
+
+function openEdit(id) {
+  var lead = findLead(id);
+  if (!lead) return;
+  document.getElementById('modalTitle').textContent = 'Edit Lead';
+  document.getElementById('mId').value = id;
+  document.getElementById('mName').value = lead.name;
+  document.getElementById('mReaction').value = lead.reaction || 'love';
+  document.getElementById('mCommented').value = lead.commented ? '1' : '0';
+  document.getElementById('mStatus').value = lead.status || 'new';
+  document.getElementById('mNotes').value = lead.notes || '';
+  document.getElementById('mDel').style.display = 'inline-block';
+  document.getElementById('overlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function saveLead() {
+  var id = document.getElementById('mId').value;
+  var name = document.getElementById('mName').value.trim();
+  if (!name) { alert('Please enter a name'); return; }
+  var data = {
+    name: name,
+    reaction: document.getElementById('mReaction').value,
+    commented: document.getElementById('mCommented').value === '1',
+    status: document.getElementById('mStatus').value,
+    notes: document.getElementById('mNotes').value,
+    updatedAt: Date.now()
+  };
+  if (id) {
+    var lead = findLead(id);
+    if (lead) Object.assign(lead, data);
+  } else {
+    data.id = 'new_' + Date.now();
+    data.msg1_sent = false;
+    leads.push(data);
+  }
+  save();
+  closeModal();
+  render();
+}
+
+function deleteLead() {
+  var id = document.getElementById('mId').value;
+  if (!id || !confirm('Remove this lead?')) return;
+  leads = leads.filter(function(l){ return String(l.id) !== String(id); });
+  save();
+  closeModal();
+  render();
+}
+
+// ── TABS ──────────────────────────────────────────────
+function showTab(name, el) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('on'); });
+  el.classList.add('on');
+  document.getElementById('panel-' + name).classList.add('on');
+  if (name === 'summary') renderSummary();
+  if (name === 'events') renderEventsTab();
+  if (name === 'va') renderVATab();
+}
+
+// ── SUMMARY ───────────────────────────────────────────
+function renderSummary() {
+  var total = leads.length;
+  var contacted = leads.filter(function(l){ return l.status && l.status !== 'new'; }).length;
+  var jun20 = leads.filter(function(l){ return l.status === 'june20_accepted'; });
+  var jun20m = leads.filter(function(l){ return l.status === 'june20_maybe'; });
+  var converted = leads.filter(function(l){ return l.status === 'converted'; });
+  var inactive = leads.filter(function(l){ return INACTIVE.indexOf(l.status) >= 0; });
+  var cnt_ignite = leads.filter(function(l){ return l.ignite_sent; }).length;
+  var cnt_fbg = leads.filter(function(l){ return l.in_fb_group; }).length;
+  var cnt_fbc = leads.filter(function(l){ return l.in_fb_chat; }).length;
+  var cnt_lm = leads.filter(function(l){ return l.lead_magnet_sent; }).length;
+  var cnt_n12 = leads.filter(function(l){ return l.nurture_12k; }).length;
+  var cnt_s12 = leads.filter(function(l){ return l.signed_12k; }).length;
+  var withNotes = leads.filter(function(l){ return l.notes && l.notes.trim(); });
+  var priority = leads.filter(function(l){ return ['june20_accepted','friday_accepted','replied','checking_schedule','checking_timezone','june20_maybe'].indexOf(l.status) >= 0; });
+  var pct = total ? Math.round(contacted/total*100) : 0;
+
+  // Status breakdown
+  var statusBreakdown = '';
+  Object.keys(STATUS_LABELS).forEach(function(s) {
+    var count = leads.filter(function(l){ return l.status === s; }).length;
+    if (!count) return;
+    var p = total ? Math.round(count/total*100) : 0;
+    var c = STATUS_COLORS[s] || '#999';
+    statusBreakdown += '<div class="srow"><div style="flex:1"><div class="srow-label">' + STATUS_LABELS[s] + '</div><div class="sbar"><div class="sbar-fill" style="width:' + p + '%;background:' + c + '"></div></div></div><div class="srow-num">' + count + '</div></div>';
+  });
+
+  function plist(arr, color) {
+    if (!arr.length) return '<div style="color:#bbb;font-size:12px;padding:8px 0">None yet</div>';
+    return arr.map(function(l) {
+      return '<div class="pitem"><div class="dot" style="background:' + color + '"></div><div><div class="pname">' + escHtml(l.name) + '</div>' + (l.notes ? '<div class="pnote">' + escHtml(l.notes.substring(0,55)) + (l.notes.length>55?'...':'') + '</div>' : '') + '</div></div>';
+    }).join('');
+  }
+
+  document.getElementById('summaryContent').innerHTML = 
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px">' +
+      '<div class="scard"><div class="big-num"><div class="n">' + total + '</div><div class="l">Total Leads</div><div class="s">from P1 post</div></div></div>' +
+      '<div class="scard"><div class="big-num"><div class="n" style="color:#0d47a1">' + jun20.length + '</div><div class="l">June 20 ✅</div><div class="s">' + (total?Math.round(jun20.length/total*100):0) + '% of leads</div></div></div>' +
+      '<div class="scard"><div class="big-num"><div class="n" style="color:#28a745">' + converted.length + '</div><div class="l">🏆 R1000</div><div class="s">$97 signups</div></div></div>' +
+      '<div class="scard"><div class="big-num"><div class="n">' + pct + '%</div><div class="l">Outreach Done</div><div class="s">' + contacted + ' / ' + total + '</div></div></div>' +
+    '</div>' +
+    '<div class="sum-grid">' +
+      '<div class="scard"><h3>📊 Status Breakdown</h3>' + statusBreakdown + '</div>' +
+      '<div class="scard"><h3>🎯 Priority Follow-Ups (' + priority.length + ')</h3>' + plist(priority, '#b5841a') + '</div>' +
+      '<div class="scard"><h3>✅ June 20 Confirmed (' + jun20.length + ')</h3>' + plist(jun20, '#1b5e20') + (jun20m.length ? '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#e65100;margin:10px 0 4px">🤔 Maybe (' + jun20m.length + ')</div>' + plist(jun20m, '#e65100') : '') + '</div>' +
+      '<div class="scard"><h3>🏆 Rawsome 1000 (' + converted.length + ')</h3>' + plist(converted, '#b5841a') + '</div>' +
+      '<div class="scard"><h3>❌ Inactive (' + inactive.length + ')</h3>' + plist(inactive, '#888') + '</div>' +
+      '<div class="scard"><h3>📝 Notes (' + withNotes.length + ')</h3>' + plist(withNotes, '#6a20c0') + '</div>' +
+    '</div>';
+}
+
+// ── EXPORT ────────────────────────────────────────────
+function exportCSV() {
+  var txt = 'RAWSOME 1000 TRACKER\nExported: ' + new Date().toLocaleString() + '\n\n';
+  var byStatus = {};
+  leads.forEach(function(l) { var s = l.status||'new'; (byStatus[s] = byStatus[s]||[]).push(l); });
+  Object.keys(STATUS_LABELS).forEach(function(s) {
+    if (!byStatus[s] || !byStatus[s].length) return;
+    txt += STATUS_LABELS[s].toUpperCase() + ' (' + byStatus[s].length + '):\n';
+    byStatus[s].forEach(function(l, i) { txt += (i+1) + '. ' + l.name + (l.notes ? ' — ' + l.notes : '') + '\n'; });
+    txt += '\n';
+  });
+  navigator.clipboard.writeText(txt).then(function(){ alert('List copied to clipboard! ✅'); });
+}
+
+// ── SUPER VA LEADS ───────────────────────────────────
+const VA_KEY = 'r1000_va_v1';
+var vaLeads = [];
+var VA_DEFAULT = [{"id": "va1", "name": "Terri", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va2", "name": "Anna", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va3", "name": "Naomi", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va4", "name": "Rovan", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}];
+var VA_STATUSES = {
+  'new':'🆕 New',
+  'reviewing':'👀 Reviewing',
+  'shortlisted':'⭐ Shortlisted',
+  'interviewing':'💬 Interviewing',
+  'offer_sent':'📩 Offer Sent',
+  'hired':'✅ Hired',
+  'not_fit':'❌ Not a Fit',
+};
+
+function loadVA() {
+  try {
+    var raw = localStorage.getItem(VA_KEY);
+    if (raw) {
+      vaLeads = JSON.parse(raw);
+    } else {
+      vaLeads = VA_DEFAULT;
+      saveVA();
+    }
+  } catch(e) { vaLeads = VA_DEFAULT; }
+}
+
+function saveVA() {
+  localStorage.setItem(VA_KEY, JSON.stringify(vaLeads));
+  showSaved();
+}
+
+function findVA(id) {
+  return vaLeads.find(function(v){ return v.id === id; });
+}
+
+function renderVATab() {
+  var hired = vaLeads.filter(function(v){ return v.status === 'hired'; }).length;
+  var shortlisted = vaLeads.filter(function(v){ return v.status === 'shortlisted' || v.shortlisted; }).length;
+  var interviewing = vaLeads.filter(function(v){ return v.status === 'interviewing'; }).length;
+
+  var statsHtml = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' +
+    '<div class="sbox" style="min-width:90px"><div class="snum">' + vaLeads.length + '</div><div class="slbl">Total</div></div>' +
+    '<div class="sbox" style="min-width:90px"><div class="snum" style="color:#e65100">' + shortlisted + '</div><div class="slbl">⭐ Shortlisted</div></div>' +
+    '<div class="sbox" style="min-width:90px"><div class="snum" style="color:#0d47a1">' + interviewing + '</div><div class="slbl">💬 Interviewing</div></div>' +
+    '<div class="sbox" style="min-width:90px"><div class="snum" style="color:#28a745">' + hired + '</div><div class="slbl">✅ Hired</div></div>' +
+    '</div>';
+
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<div><div style="font-size:17px;font-weight:700">🌟 Super VA Leads</div>' +
+    '<div style="font-size:12px;color:#999;margin-top:2px">Track and manage Virtual Assistant candidates</div></div>' +
+    '<button class="btn btn-gold" onclick="addVALead()">+ Add VA</button></div>' +
+    statsHtml;
+
+  vaLeads.forEach(function(va) {
+    var statusColor = {new:'#999',reviewing:'#e65100',shortlisted:'#b5841a',interviewing:'#0d47a1',offer_sent:'#6a20c0',hired:'#28a745',not_fit:'#888'}[va.status] || '#999';
+    html += '<div class="va-card" id="vacard-' + va.id + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    html += '<div class="va-name">' + escHtml(va.name) + '</div>';
+    html += '<div style="display:flex;gap:6px;align-items:center">';
+    html += '<span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;background:' + statusColor + '22;color:' + statusColor + '">' + (VA_STATUSES[va.status] || va.status) + '</span>';
+    html += '<button class="edit-btn va-del-btn" data-vaid="' + va.id + '" style="color:#dc3545;border-color:#dc354533">🗑</button>';
+    html += '</div></div>';
+    // Pipeline bar
+    var pIdx = PIPELINE.indexOf(va.status);
+    html += '<div class="pipeline-wrap"><div class="pipeline-bar">';
+    PIPELINE.forEach(function(s, i) {
+      var cls = i < pIdx ? 'pip-step done' : i === pIdx ? 'pip-step current' : 'pip-step';
+      if (INACTIVE.indexOf(va.status) >= 0) cls = 'pip-step dead';
+      html += '<div class="' + cls + '" title="' + PIPELINE_LABELS[i] + '"></div>';
+    });
+    html += '</div>';
+    if (INACTIVE.indexOf(va.status) < 0 && pIdx >= 0) {
+      html += '<div class="pip-label">' + PIPELINE_LABELS[pIdx] + ' (Step ' + (pIdx+1) + ' of ' + PIPELINE.length + ')</div>';
+    }
+    html += '</div>';
+    html += '<div class="va-fields">';
+    html += '<div class="va-field"><label>Status</label><select class="va-status-sel" data-vaid="' + va.id + '" onchange="updateVAField(this)">' +
+      Object.keys(VA_STATUSES).map(function(s){ return '<option value="' + s + '"' + (va.status===s?' selected':'') + '>' + VA_STATUSES[s] + '</option>'; }).join('') +
+      '</select></div>';
+    html += '<div class="va-field"><label>Role / Specialty</label><input type="text" class="va-role-inp" data-vaid="' + va.id + '" value="' + escHtml(va.role||'') + '" placeholder="e.g. Social Media VA" onchange="updateVAField(this)"></div>';
+    html += '<div class="va-field"><label>Rate / Budget</label><input type="text" class="va-rate-inp" data-vaid="' + va.id + '" value="' + escHtml(va.rate||'') + '" placeholder="e.g. $5/hr or $500/mo" onchange="updateVAField(this)"></div>';
+    html += '<div class="va-field"><label>Platform / Source</label><input type="text" class="va-platform-inp" data-vaid="' + va.id + '" value="' + escHtml(va.platform||'') + '" placeholder="e.g. OnlineJobs.ph" onchange="updateVAField(this)"></div>';
+    html += '</div>';
+    html += '<div class="va-checks">';
+    html += vaChk(va.id, 'offered', va.offered, '📩 Offered');
+    html += vaChk(va.id, 'accepted', va.accepted, '✅ Accepted');
+    html += vaChk(va.id, 'referred_superva', va.referred_superva, '🌟 Referred to SuperVA');
+    html += vaChk(va.id, 'hired_va', va.hired_va, '🏆 Hired VA');
+    html += '</div>';
+    html += '<textarea class="va-notes va-notes-ta" data-vaid="' + va.id + '" placeholder="Notes about this VA candidate..." onchange="updateVAField(this)">' + escHtml(va.notes||'') + '</textarea>';
+    html += '<div class="va-flash" id="vaflash-' + va.id + '"></div>';
+    html += '</div>';
+  });
+
+  document.getElementById('vaContent').innerHTML = html;
+
+  // Event delegation for VA cards
+  document.getElementById('vaContent').addEventListener('change', function(e) {
+    var vaid = e.target.getAttribute('data-vaid');
+    if (!vaid) return;
+    var va = findVA(vaid);
+    if (!va) return;
+    if (e.target.classList.contains('va-status-sel')) va.status = e.target.value;
+    if (e.target.classList.contains('va-role-inp')) va.role = e.target.value;
+    if (e.target.classList.contains('va-rate-inp')) va.rate = e.target.value;
+    if (e.target.classList.contains('va-platform-inp')) va.platform = e.target.value;
+    if (e.target.classList.contains('va-notes-ta')) va.notes = e.target.value;
+    saveVA();
+    vaFlash(vaid);
+    if (e.target.classList.contains('va-status-sel')) {
+      var card = document.getElementById('vacard-' + vaid);
+      if (card) {
+        var badge = card.querySelector('span[style*="border-radius:20px"]');
+        var statusColor = {new:'#999',reviewing:'#e65100',shortlisted:'#b5841a',interviewing:'#0d47a1',offer_sent:'#6a20c0',hired:'#28a745',not_fit:'#888'}[va.status] || '#999';
+        if (badge) { badge.textContent = VA_STATUSES[va.status]||va.status; badge.style.background=statusColor+'22'; badge.style.color=statusColor; }
+      }
+    }
+  }, {once: false});
+
+  document.getElementById('vaContent').addEventListener('click', function(e) {
+    // Delete
+    var del = e.target.closest('.va-del-btn');
+    if (del) { var id=del.getAttribute('data-vaid'); if(confirm('Remove this VA lead?')){vaLeads=vaLeads.filter(function(v){return v.id!==id;}); saveVA(); renderVATab();} return; }
+    // Checkbox
+    var chk = e.target.closest('.va-chk');
+    if (chk) {
+      var vaid = chk.getAttribute('data-vaid');
+      var field = chk.getAttribute('data-field');
+      var va = findVA(vaid);
+      if (!va) return;
+      va[field] = !va[field];
+      saveVA();
+      vaFlash(vaid);
+      chk.className = va[field] ? 'chk-item ck-green va-chk' : 'chk-item va-chk';
+      chk.querySelector('.chk-box').innerHTML = va[field] ? '&#10003;' : '';
+    }
+  }, {once: false});
+}
+
+function vaChk(id, field, val, label) {
+  var cls = val ? 'chk-item ck-green va-chk' : 'chk-item va-chk';
+  return '<div class="' + cls + '" data-vaid="' + id + '" data-field="' + field + '">' +
+    '<div class="chk-box">' + (val ? '&#10003;' : '') + '</div>' + label + '</div>';
+}
+
+function updateVAField(el) { /* handled by delegation */ }
+
+function vaFlash(id) {
+  var el = document.getElementById('vaflash-' + id);
+  if (el) { el.textContent = '✓ Saved'; setTimeout(function(){ el.textContent=''; }, 1500); }
+}
+
+function addVALead() {
+  var name = prompt('Enter VA candidate name:');
+  if (!name || !name.trim()) return;
+  vaLeads.push({id:'va_'+Date.now(), name:name.trim(), status:'new', role:'', rate:'', platform:'', notes:'', shortlisted:false, interviewed:false, offer_sent:false, hired:false});
+  saveVA();
+  renderVATab();
+}
+
+// ── EVENTS ───────────────────────────────────────────
+const EV_KEY = 'r1000_events_v1';
+var events = [];
+
+// Pre-load known sessions
+var DEFAULT_EVENTS = [
+  {id:'ev1', name:'Emotional Mastery Call', date:'2026-05-31', time:'7:30AM SG / 9:30PM EST', link:'', notes:'First Saturday call — Kenny P1 Award post outreach', invites:{}},
+  {id:'ev2', name:'1:1 Belief Spotlight — Andrew Breakthrough', date:'2026-06-05', time:'8:00AM SG', link:'', notes:'Friday session with Andrew, invited select leads', invites:{}},
+  {id:'ev3', name:'Rawsome Academy Group Call — Building Trust / Six Human Needs', date:'2026-06-20', time:'7:30AM SG', link:'', notes:'June monthly session', invites:{}},
+];
+
+var EV_STATUSES = {
+  '':'— Not Invited',
+  'invited':'📩 Invited',
+  'confirmed':'✅ Confirmed',
+  'maybe':'🤔 Maybe',
+  'declined':'❌ Declined',
+  'attended':'⭐ Attended',
+};
+
+function loadEvents() {
+  try {
+    var raw = localStorage.getItem(EV_KEY);
+    if (raw) {
+      events = JSON.parse(raw);
+    } else {
+      events = DEFAULT_EVENTS;
+      saveEvents();
+    }
+  } catch(e) { events = DEFAULT_EVENTS; }
+}
+
+function saveEvents() {
+  localStorage.setItem(EV_KEY, JSON.stringify(events));
+  showSaved();
+}
+
+function findEvent(id) {
+  return events.find(function(e){ return e.id === id; });
+}
+
+function renderEventsTab() {
+  var el = document.getElementById('eventsContent');
+  var addBtn = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<div><div style="font-size:17px;font-weight:700">📅 Group Call Sessions</div>' +
+    '<div style="font-size:12px;color:#999;margin-top:2px">Track invites and attendance for each event</div></div>' +
+    '<button class="btn btn-gold" onclick="openAddEvent()">+ Add Event</button></div>';
+
+  if (!events.length) {
+    el.innerHTML = addBtn + '<div class="empty-state">No events yet. Click + Add Event to create your first one.</div>';
+    return;
+  }
+
+  // Sort by date descending
+  var sorted = events.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+
+  var html = addBtn;
+  sorted.forEach(function(ev) {
+    var invites = ev.invites || {};
+    var total = Object.keys(invites).length;
+    var confirmed = Object.values(invites).filter(function(s){ return s==='confirmed'||s==='attended'; }).length;
+    var attended = Object.values(invites).filter(function(s){ return s==='attended'; }).length;
+    var maybe = Object.values(invites).filter(function(s){ return s==='maybe'; }).length;
+    var declined = Object.values(invites).filter(function(s){ return s==='declined'; }).length;
+    var invited = Object.values(invites).filter(function(s){ return s==='invited'; }).length;
+
+    var dateStr = ev.date ? new Date(ev.date + 'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
+
+    html += '<div class="event-card">';
+    html += '<div class="event-header">';
+    html += '<div><div class="event-title">📅 ' + escHtml(ev.name) + '</div>';
+    html += '<div class="event-meta">' + dateStr + (ev.time ? ' &nbsp;·&nbsp; ⏰ ' + escHtml(ev.time) : '') + (ev.link ? ' &nbsp;·&nbsp; <a href="' + escHtml(ev.link) + '" target="_blank" style="color:#b5841a">Join Link</a>' : '') + '</div>';
+    if (ev.notes) html += '<div style="font-size:11px;color:#aaa;margin-top:3px">' + escHtml(ev.notes) + '</div>';
+    html += '</div>';
+    html += '<div class="event-btns">';
+    html += '<button class="btn btn-dark ev-invite-btn" style="font-size:11px;padding:6px 12px" data-evid="' + ev.id + '">👥 Manage Invites</button>';
+    html += '<button class="edit-btn ev-edit-btn" data-evid="' + ev.id + '">✏️</button>';
+    html += '</div></div>';
+
+    // Stats
+    html += '<div class="event-stats">';
+    html += evStat(total, 'Invited');
+    html += evStat(confirmed, '✅ Confirmed', '#1b5e20');
+    html += evStat(attended, '⭐ Attended', '#b5841a');
+    html += evStat(maybe, '🤔 Maybe', '#e65100');
+    html += evStat(declined, '❌ Declined', '#888');
+    html += '</div>';
+
+    // Attendee list
+    if (total > 0) {
+      html += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#bbb;letter-spacing:.04em;margin-bottom:6px">Invite List</div>';
+      html += '<div class="attendee-grid">';
+      Object.entries(invites).forEach(function(entry) {
+        var name = entry[0], status = entry[1];
+        var badgeCls = status === 'confirmed' ? 'ev-status-badge ev-confirmed'
+          : status === 'attended' ? 'ev-status-badge ev-attended'
+          : status === 'maybe' ? 'ev-status-badge ev-maybe'
+          : status === 'declined' ? 'ev-status-badge ev-declined'
+          : 'ev-status-badge ev-invited';
+        var badgeLabel = EV_STATUSES[status] || status;
+        html += '<div class="attendee-card">';
+        html += '<div class="attendee-name">' + escHtml(name) + '</div>';
+        html += '<span class="' + badgeCls + '">' + badgeLabel + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    // Attended section
+    var attendedNames = Object.entries(invites)
+      .filter(function(e){ return e[1]==='attended'; })
+      .map(function(e){ return e[0]; });
+    if (attendedNames.length) {
+      html += '<div class="attend-section">';
+      html += '<div class="attend-section-title">⭐ Attended (' + attendedNames.length + ')</div>';
+      html += '<div class="attend-list">';
+      attendedNames.forEach(function(n){ html += '<div class="attend-chip">⭐ ' + escHtml(n) + '</div>'; });
+      html += '</div></div>';
+    }
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function evStat(n, l, c) {
+  return '<div class="ev-stat"><div class="ev-stat-num"' + (c?' style="color:'+c+'"':'') + '>' + n + '</div><div class="ev-stat-lbl">' + l + '</div></div>';
+}
+
+// Event Modal
+function openAddEvent() {
+  document.getElementById('eventModalTitle').textContent = 'Add New Event';
+  document.getElementById('eMId').value = '';
+  document.getElementById('eMName').value = '';
+  document.getElementById('eMDate').value = '';
+  document.getElementById('eMTime').value = '';
+  document.getElementById('eMLink').value = '';
+  document.getElementById('eMNotes').value = '';
+  document.getElementById('eDelBtn').style.display = 'none';
+  document.getElementById('eventOverlay').style.display = 'flex';
+}
+
+function openEditEvent(id) {
+  var ev = findEvent(id);
+  if (!ev) return;
+  document.getElementById('eventModalTitle').textContent = 'Edit Event';
+  document.getElementById('eMId').value = id;
+  document.getElementById('eMName').value = ev.name || '';
+  document.getElementById('eMDate').value = ev.date || '';
+  document.getElementById('eMTime').value = ev.time || '';
+  document.getElementById('eMLink').value = ev.link || '';
+  document.getElementById('eMNotes').value = ev.notes || '';
+  document.getElementById('eDelBtn').style.display = 'inline-block';
+  document.getElementById('eventOverlay').style.display = 'flex';
+}
+
+function setInviteFilter(val, btn) {
+  document.getElementById('inviteFilter').value = val;
+  document.querySelectorAll('#inviteOverlay .fb').forEach(function(b){
+    b.style.borderColor='#ddd'; b.style.color='#777'; b.style.background='#fff'; b.style.fontWeight='';
+  });
+  btn.style.borderColor='#b5841a'; btn.style.color='#b5841a'; btn.style.background='#fffbf2'; btn.style.fontWeight='700';
+  renderInviteList();
+}
+
+function closeEventModal() { document.getElementById('eventOverlay').style.display = 'none'; }
+
+function saveEvent() {
+  var id = document.getElementById('eMId').value;
+  var name = document.getElementById('eMName').value.trim();
+  if (!name) { alert('Please enter an event name'); return; }
+  var data = {
+    name: name,
+    date: document.getElementById('eMDate').value,
+    time: document.getElementById('eMTime').value,
+    link: document.getElementById('eMLink').value,
+    notes: document.getElementById('eMNotes').value,
+  };
+  if (id) {
+    var ev = findEvent(id);
+    if (ev) { ev.name=data.name; ev.date=data.date; ev.time=data.time; ev.link=data.link; ev.notes=data.notes; }
+  } else {
+    data.id = 'ev_' + Date.now();
+    data.invites = {};
+    events.push(data);
+  }
+  saveEvents();
+  closeEventModal();
+  renderEventsTab();
+}
+
+function deleteEvent() {
+  var id = document.getElementById('eMId').value;
+  if (!id || !confirm('Delete this event?')) return;
+  events = events.filter(function(e){ return e.id !== id; });
+  saveEvents();
+  closeEventModal();
+  renderEventsTab();
+}
+
+// Invite Modal
+function openInviteModal(evId) {
+  var ev = findEvent(evId);
+  if (!ev) return;
+  document.getElementById('inviteModalTitle').textContent = '👥 ' + ev.name;
+  document.getElementById('iMEventId').value = evId;
+  document.getElementById('inviteSearch').value = '';
+  renderInviteList();
+  document.getElementById('inviteOverlay').style.display = 'flex';
+}
+
+function closeInviteModal() {
+  document.getElementById('inviteOverlay').style.display = 'none';
+  renderEventsTab();
+}
+
+// Handle attended toggle clicks inside invite modal
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.att-toggle-btn');
+  if (!btn) return;
+  var evId = btn.getAttribute('data-evid');
+  var name = btn.getAttribute('data-name');
+  var ev = findEvent(evId);
+  if (!ev) return;
+  if (!ev.invites) ev.invites = {};
+  var current = ev.invites[name] || '';
+  // Toggle: if already attended → back to confirmed, else → attended
+  ev.invites[name] = (current === 'attended') ? 'confirmed' : 'attended';
+  saveEvents();
+  // Update UI immediately
+  var isNowAttended = ev.invites[name] === 'attended';
+  btn.className = isNowAttended ? 'attend-toggle on att-toggle-btn' : 'attend-toggle att-toggle-btn';
+  btn.querySelector('.att-box').innerHTML = isNowAttended ? '&#10003;' : '';
+  // Also update the dropdown
+  var sel = btn.closest('.invite-item').querySelector('.invite-status-sel');
+  if (sel) sel.value = ev.invites[name];
+});
+
+function renderInviteList() {
+  var evId = document.getElementById('iMEventId').value;
+  var ev = findEvent(evId);
+  if (!ev) return;
+  var q = document.getElementById('inviteSearch').value.toLowerCase();
+  var filterVal = document.getElementById('inviteFilter') ? document.getElementById('inviteFilter').value : '';
+  var filtered = leads.filter(function(l){
+    if (q && l.name.toLowerCase().indexOf(q) < 0) return false;
+    var cur = (ev.invites || {})[l.name] || '';
+    if (filterVal === 'invited' && !cur) return false;
+    if (filterVal === 'attended' && cur !== 'attended') return false;
+    if (filterVal === 'confirmed' && cur !== 'confirmed') return false;
+    return true;
+  });
+  var html = '';
+  filtered.forEach(function(lead) {
+    var current = (ev.invites || {})[lead.name] || '';
+    var attended = current === 'attended';
+    var attCls = attended ? 'attend-toggle on' : 'attend-toggle';
+    html += '<div class="invite-item" data-invname="' + escHtml(lead.name) + '" data-evid="' + evId + '">';
+    html += '<div class="invite-item-name">' + escHtml(lead.name) + '</div>';
+    html += '<div style="display:flex;gap:6px;align-items:center">';
+    html += '<select class="invite-status-sel" data-evid="' + evId + '" data-name="' + escHtml(lead.name) + '" onchange="updateInviteStatus(this)">';
+    Object.keys(EV_STATUSES).forEach(function(s) {
+      html += '<option value="' + s + '"' + (current===s?' selected':'') + '>' + EV_STATUSES[s] + '</option>';
+    });
+    html += '</select>';
+    html += '<div class="' + attCls + ' att-toggle-btn" data-evid="' + evId + '" data-name="' + escHtml(lead.name) + '">';
+    html += '<div class="att-box">' + (attended ? '&#10003;' : '') + '</div>⭐ Attended';
+    html += '</div>';
+    html += '</div></div>';
+  });
+  document.getElementById('inviteList').innerHTML = html || '<div class="empty-state">No leads match.</div>';
+}
+
+function updateInviteStatus(sel) {
+  var evId = sel.getAttribute('data-evid');
+  var name = sel.getAttribute('data-name');
+  var status = sel.value;
+  var ev = findEvent(evId);
+  if (!ev) return;
+  if (!ev.invites) ev.invites = {};
+  if (status === '') {
+    delete ev.invites[name];
+  } else {
+    ev.invites[name] = status;
+  }
+  saveEvents();
+}
+
+// ── INIT ──────────────────────────────────────────────
+// Event delegation — avoids all quote-escaping issues
+document.getElementById('grid').addEventListener('change', function(e) {
+  var card = e.target.closest('[data-id]');
+  if (!card) return;
+  var id = card.getAttribute('data-id');
+  if (e.target.classList.contains('lead-source-inp')) { var l=findLead(id); if(l){l.lead_source=e.target.value;l.updatedAt=Date.now();save();flash(id);} return; }
+  if (e.target.classList.contains('notes-ta')) updateNotes(id, e.target.value);
+});
+
+document.getElementById('grid').addEventListener('click', function(e) {
+  if (e.target.classList.contains('edit-btn')) {
+    var card = e.target.closest('[data-id]');
+    if (card) openEdit(card.getAttribute('data-id'));
+    return;
+  }
+  // Pipeline checkbox toggle
+  var pipChkEl = e.target.closest('.pip-chk-item');
+  if (pipChkEl && pipChkEl.closest('#grid')) {
+    var id = pipChkEl.getAttribute('data-id');
+    var field = pipChkEl.getAttribute('data-field');
+    var colorCls = pipChkEl.getAttribute('data-color');
+    var lead = findLead(id);
+    if (!lead) return;
+    lead[field] = !lead[field];
+    lead.updatedAt = Date.now();
+    save();
+    flash(id);
+    if (lead[field]) {
+      pipChkEl.classList.add(colorCls);
+      pipChkEl.querySelector('.pc-box').innerHTML = '&#10003;';
+    } else {
+      pipChkEl.classList.remove('pc-on','pc-gold','pc-blue','pc-purple','pc-red');
+      pipChkEl.querySelector('.pc-box').innerHTML = '';
+    }
+    return;
+  }
+  // Admin checkbox toggle
+  var chk = e.target.closest('.chk-item');
+  if (chk && chk.closest('#grid')) {
+    var id = chk.getAttribute('data-id');
+    var field = chk.getAttribute('data-field');
+    var color = chk.getAttribute('data-color');
+    var lead = findLead(id);
+    if (!lead) return;
+    lead[field] = !lead[field];
+    lead.updatedAt = Date.now();
+    save();
+    flash(id);
+    if (lead[field]) {
+      chk.classList.add('ck-' + color);
+      chk.querySelector('.chk-box').innerHTML = '&#10003;';
+    } else {
+      chk.classList.remove('ck-green','ck-gold','ck-blue');
+      chk.querySelector('.chk-box').innerHTML = '';
+    }
+  }
+});
+
+loadEvents();
+loadVA();
+load();
+
+// Event delegation for events panel
+document.getElementById('eventsContent').addEventListener('click', function(e) {
+  var invBtn = e.target.closest('.ev-invite-btn');
+  if (invBtn) { openInviteModal(invBtn.getAttribute('data-evid')); return; }
+  var editBtn = e.target.closest('.ev-edit-btn');
+  if (editBtn) { openEditEvent(editBtn.getAttribute('data-evid')); return; }
+});
+</script>
+</body>
+</html>
