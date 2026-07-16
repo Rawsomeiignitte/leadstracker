@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAWSOME MISSION CONTROL</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f1;color:#1a1a1a}
+.topbar{background:#111;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:10px}
+.logo{font-size:15px;font-weight:700;white-space:nowrap}
+.logo span{color:#b5841a}
+.save-badge{font-size:11px;color:#b5841a;font-weight:600;min-width:120px}
+.topbar-btns{display:flex;gap:8px;flex-shrink:0}
+.btn{padding:7px 14px;border-radius:7px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.btn-gold{background:#b5841a;color:#fff}
+.btn-dark{background:#333;color:#fff}
+.tabs{background:#fff;border-bottom:2px solid #e8e8e8;display:flex;padding:0 20px;position:sticky;top:48px;z-index:99}
+.tab{padding:12px 18px;font-size:13px;font-weight:600;color:#999;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:inherit}
+.tab.on{color:#b5841a;border-bottom-color:#b5841a}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+.panel{display:none}.panel.on{display:block}
+
+/* Stats bar */
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.sbox{background:#fff;border:1px solid #e4e4e4;border-radius:9px;padding:10px 14px;text-align:center;flex:1;min-width:90px}
+.snum{font-size:22px;font-weight:800;color:#b5841a}
+.slbl{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.toolbar input,.toolbar select{border:1px solid #ddd;border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit;background:#fff}
+.toolbar input{flex:1;min-width:160px}
+.toolbar input:focus,.toolbar select:focus{outline:none;border-color:#b5841a}
+
+/* Cards */
+.grid{display:grid;gap:8px}
+.card{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:14px 16px}
+.card.dim{opacity:.5}
+.card-flash{animation:cardFlash 2.2s ease;border-color:#b5841a !important;box-shadow:0 0 0 3px rgba(181,132,26,.35)}
+@keyframes cardFlash{0%{box-shadow:0 0 0 4px rgba(181,132,26,.6)}100%{box-shadow:0 0 0 3px rgba(181,132,26,0)}}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.card-name{font-size:14px;font-weight:700}
+.card-badges{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+.bdg{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700}
+.b-love{background:#fde8e8;color:#c03030}
+.b-like{background:#e8eeff;color:#2a4acc}
+.b-cmt{background:#f0e8ff;color:#6a20c0}
+.edit-btn{font-size:11px;padding:4px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.edit-btn:hover{border-color:#b5841a;color:#b5841a}
+.card select{width:100%;border:1px solid #eee;border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;background:#fafaf8;margin-bottom:7px;cursor:pointer}
+.card select:focus{outline:none;border-color:#b5841a}
+.card textarea{width:100%;border:1px solid #eee;border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:48px;background:#fafaf8}
+.card textarea:focus{outline:none;border-color:#b5841a}
+.card textarea::placeholder{color:#ccc}
+.saved-flash{font-size:10px;color:#28a745;font-weight:700;margin-top:3px;height:14px}
+.checks-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0}
+.chk-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#555;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid #eee;background:#fafaf8;transition:.15s;user-select:none}
+.chk-item:hover{border-color:#b5841a55;background:#fffbf2}
+.chk-item.ck-green{background:#f0fdf0;border-color:#2d7a2d55;color:#1a5c1a;font-weight:600}
+.chk-item.ck-gold{background:#fffbf0;border-color:#b5841a55;color:#7a5010;font-weight:600}
+.chk-item.ck-blue{background:#f0f4ff;border-color:#2a4acc55;color:#1a2a8a;font-weight:600}
+.chk-box{width:14px;height:14px;border:1.5px solid #ccc;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;background:#fff}
+.chk-item.ck-green .chk-box{background:#28a745;border-color:#28a745;color:#fff}
+.chk-item.ck-gold .chk-box{background:#b5841a;border-color:#b5841a;color:#fff}
+.chk-item.ck-blue .chk-box{background:#2a4acc;border-color:#2a4acc;color:#fff}
+.sec-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#bbb;margin-top:8px;margin-bottom:3px}
+.nurture-sel{width:100%;border:1.5px solid #b5841a44;border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:#fffbf8;color:#7a5010;font-weight:600;cursor:pointer;margin-bottom:6px}
+.nurture-sel:focus{outline:none;border-color:#b5841a}
+.nurture-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;display:inline-block;margin-bottom:6px}
+.nb-r1000{background:#fffbf0;color:#7a5010;border:1px solid #b5841a44}
+.nb-unicorn{background:#fdf0ff;color:#6a0080;border:1px solid #aa44cc44}
+.nb-rawsome_x{background:#fff0e8;color:#8a2000;border:1px solid #cc440044}
+.nb-superva{background:#e8f5ff;color:#0a4a8a;border:1px solid #2244aa44}
+.nb-p1_referral{background:#f0fff0;color:#1a5a1a;border:1px solid #44aa4444}
+.pipeline-checks{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:6px 0}
+.journey-wrap{margin:8px 0}
+.journey-stages{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px}
+.j-stage{flex:1;min-width:0;text-align:center;padding:5px 3px;border-radius:7px;border:1.5px solid #eee;background:#fafaf8;cursor:pointer;transition:.2s;position:relative;select:none}
+.j-stage:hover{border-color:#b5841a;background:#fffbf2;transform:scale(1.05)}
+.j-stage.j-done{background:#e8f5e8;border-color:#2d7a2d55}
+.j-stage.j-active{background:#b5841a;border-color:#b5841a;box-shadow:0 0 0 3px #b5841a33}
+.j-stage.j-declined{background:#fff0f0;border-color:#dc354544}
+.j-num{font-size:9px;font-weight:800;color:#bbb;display:block;line-height:1}
+.j-stage.j-done .j-num{color:#2d7a2d}
+.j-stage.j-active .j-num{color:#fff}
+.j-stage.j-declined .j-num{color:#dc3545}
+.j-icon{font-size:13px;display:block;margin:2px 0}
+.j-stage.j-done .j-icon{filter:none}
+.j-lbl{font-size:8px;color:#aaa;display:block;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.j-stage.j-done .j-lbl{color:#2d7a2d}
+.j-stage.j-active .j-lbl{color:#fff;font-weight:700}
+.j-flags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.j-flag{display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:20px;border:1px solid #eee;background:#fafaf8;cursor:pointer;user-select:none;transition:.12s;white-space:nowrap}
+.j-flag:hover{border-color:#b5841a44}
+.j-flag.jf-on{font-weight:700}
+.jf-recording.jf-on{background:#e8f0ff;border-color:#2a4acc44;color:#1a2a8a}
+.jf-followup.jf-on{background:#fff8e0;border-color:#b5841a44;color:#7a5010}
+.jf-cold.jf-on{background:#f0f8ff;border-color:#0a5a9a44;color:#0a3a6a}
+.jf-declined.jf-on{background:#fff0f0;border-color:#dc354544;color:#8a2020}
+.j-flag .jf-box{width:12px;height:12px;border:1.5px solid #ccc;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;background:#fff}
+.jf-recording.jf-on .jf-box,.jf-followup.jf-on .jf-box,.jf-cold.jf-on .jf-box{background:#28a745;border-color:#28a745;color:#fff}
+.jf-declined.jf-on .jf-box{background:#dc3545;border-color:#dc3545;color:#fff}
+.pip-chk{display:flex;align-items:center;gap:6px;font-size:11px;color:#555;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid #eee;background:#fafaf8;user-select:none;transition:.12s}
+.pip-chk:hover{border-color:#b5841a44;background:#fffbf2}
+.pip-chk.pc-on{background:#f0fdf0;border-color:#2d7a2d55;color:#1a5c1a;font-weight:600}
+.pip-chk.pc-gold{background:#fffbf0;border-color:#b5841a55;color:#7a5010;font-weight:600}
+.pip-chk.pc-red{background:#fff0f0;border-color:#dc354533;color:#8a2020;font-weight:600}
+.pip-chk.pc-blue{background:#f0f4ff;border-color:#2a4acc44;color:#1a2a8a;font-weight:600}
+.pip-chk.pc-purple{background:#f5f0ff;border-color:#6a20c044;color:#4a0a9a;font-weight:600}
+.pc-box{width:14px;height:14px;border:1.5px solid #ccc;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;background:#fff}
+.pip-chk.pc-on .pc-box{background:#28a745;border-color:#28a745;color:#fff}
+.pip-chk.pc-gold .pc-box{background:#b5841a;border-color:#b5841a;color:#fff}
+.pip-chk.pc-red .pc-box{background:#dc3545;border-color:#dc3545;color:#fff}
+.pip-chk.pc-blue .pc-box{background:#2a4acc;border-color:#2a4acc;color:#fff}
+.pip-chk.pc-purple .pc-box{background:#6a20c0;border-color:#6a20c0;color:#fff}
+.pip-divider{grid-column:1/-1;height:1px;background:#f0f0f0;margin:2px 0}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:14px}
+.fg{margin-bottom:12px}
+.fg label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#777;display:block;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#b5841a}
+.fg textarea{resize:vertical;min-height:80px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.btn-red{background:#dc3545;color:#fff}
+.btn-gray{background:#eee;color:#444}
+
+/* Summary */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.scard{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:16px}
+.scard h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:12px}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f5f5f5}
+.srow:last-child{border:none}
+.srow-label{font-size:12px;color:#555}
+.srow-num{font-size:14px;font-weight:800;color:#1a1a1a}
+.sbar{height:3px;background:#f0f0f0;border-radius:2px;margin-top:3px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:2px;transition:.4s}
+.big-num{text-align:center;padding:16px 0}
+.big-num .n{font-size:44px;font-weight:800;color:#b5841a;line-height:1}
+.big-num .l{font-size:11px;color:#aaa;text-transform:uppercase;margin-top:4px}
+.big-num .s{font-size:11px;color:#bbb;margin-top:2px}
+.pitem{display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed #f0f0f0;align-items:flex-start}
+.pitem:last-child{border:none}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.pname{font-size:13px;font-weight:600}
+.pnote{font-size:11px;color:#888;margin-top:1px}
+.empty-state{color:#bbb;text-align:center;padding:2rem;font-size:13px}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px}
+.dash-card{background:#fff;border:1px solid #e4e4e4;border-radius:12px;padding:16px}
+.dash-card h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.dash-card h3 span{font-size:18px;font-weight:800;color:#b5841a}
+.action-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed #f0f0f0}
+.action-item:last-child{border:none}
+.action-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.action-name{font-size:13px;font-weight:600}
+.action-note{font-size:11px;color:#888;margin-top:1px}
+.action-tag{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;white-space:nowrap;margin-left:auto;flex-shrink:0}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.kpi-box{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:.15s}
+.kpi-box:hover{border-color:#b5841a55;background:#fffbf2}
+.kpi-num{font-size:28px;font-weight:800;color:#b5841a;line-height:1}
+.kpi-lbl{font-size:10px;color:#aaa;margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+.kpi-sub{font-size:11px;color:#888;margin-top:2px}
+.funnel-step{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f5f5f5}
+.funnel-step:last-child{border:none}
+.funnel-bar{flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden}
+.funnel-fill{height:100%;border-radius:3px;transition:.4s}
+.funnel-num{font-size:13px;font-weight:800;color:#1a1a1a;width:28px;text-align:right}
+.funnel-lbl{font-size:12px;color:#555;width:140px}
+.quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.qa-btn{padding:9px 16px;border-radius:8px;border:1px solid #e4e4e4;background:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;color:#555;transition:.15s;display:flex;align-items:center;gap:6px}
+.qa-btn:hover{border-color:#b5841a;color:#b5841a;background:#fffbf2}
+.today-banner{background:linear-gradient(135deg,#b5841a18,#b5841a08);border:1px solid #b5841a44;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.client-mini{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f5f5f5}
+.client-mini:last-child{border:none}
+.call-item{padding:7px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+.call-item:last-child{border:none}
+.call-item-name{font-weight:600}
+.call-item-meta{font-size:11px;color:#888;margin-top:1px}
+/* Active Clients */
+.client-card{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.client-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px}
+.client-name{font-size:15px;font-weight:700}
+.client-plan{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700}
+.plan-97{background:#fffbf0;color:#7a5010;border:1px solid #b5841a44}
+.plan-12k{background:#f0f0ff;color:#3a1a9a;border:1px solid #6a20c044}
+.plan-100k{background:#fff0e8;color:#8a2000;border:1px solid #cc440044}
+.plan-unicorn{background:#fdf0ff;color:#6a0080;border:1px solid #aa44cc44}
+.client-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:10px}
+.cf-group{display:flex;flex-direction:column;gap:3px}
+.cf-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#aaa}
+.cf-input{border:1px solid #eee;border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;background:#fafaf8;width:100%}
+.cf-input:focus{outline:none;border-color:#b5841a}
+.expiry-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;margin-left:6px}
+.exp-ok{background:#e8f5e8;color:#1b5e20}
+.exp-soon{background:#fff3e0;color:#e65100}
+.exp-red{background:#fde8e8;color:#c62828}
+.client-calls{margin-top:10px;padding-top:10px;border-top:1px solid #f5f5f5}
+.client-calls-title{font-size:10px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.04em;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+.call-entry{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:5px;align-items:center}
+.call-entry input{border:1px solid #eee;border-radius:6px;padding:5px 8px;font-size:11px;font-family:inherit;background:#fafaf8;width:100%}
+.call-entry input:focus{outline:none;border-color:#b5841a}
+.call-del{font-size:11px;padding:3px 8px;border:1px solid #f0c0c0;border-radius:5px;background:#fff;color:#c04040;cursor:pointer;font-family:inherit;white-space:nowrap}
+.add-call-btn{font-size:11px;padding:4px 10px;border:1px solid #b5841a44;border-radius:6px;background:#fffbf2;color:#b5841a;cursor:pointer;font-family:inherit;font-weight:600}
+.client-flash{font-size:10px;color:#28a745;font-weight:700;height:14px;margin-top:4px}
+.admin-stage{margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0}
+.admin-stage-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#b5841a;margin-bottom:7px}
+.admin-checks{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.admin-chk{display:flex;align-items:center;gap:6px;font-size:11px;color:#555;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid #eee;background:#fafaf8;user-select:none;transition:.12s}
+.admin-chk:hover{border-color:#b5841a44;background:#fffbf2}
+.admin-chk.ac-on{background:#f0fdf0;border-color:#2d7a2d55;color:#1a5c1a;font-weight:600}
+.admin-chk .ac-box{width:14px;height:14px;border:1.5px solid #ccc;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;background:#fff}
+.admin-chk.ac-on .ac-box{background:#28a745;border-color:#28a745;color:#fff}
+.renewal-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.renewal-row label{font-size:10px;font-weight:700;text-transform:uppercase;color:#aaa;white-space:nowrap}
+.renewal-row input{border:1px solid #eee;border-radius:6px;padding:5px 9px;font-size:12px;font-family:inherit;background:#fafaf8;flex:1}
+.renewal-row input:focus{outline:none;border-color:#b5841a}
+/* Social Content */
+.content-card{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.content-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:start}
+.content-field{display:flex;flex-direction:column;gap:3px}
+.content-field label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#aaa}
+.content-field input,.content-field select,.content-field textarea{border:1px solid #eee;border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;background:#fafaf8;width:100%}
+.content-field input:focus,.content-field select:focus,.content-field textarea:focus{outline:none;border-color:#b5841a}
+.content-field textarea{min-height:60px;resize:vertical}
+.status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+.dot-draft{background:#ccc}
+.dot-scheduled{background:#2a4acc}
+.dot-posted{background:#28a745}
+.dot-idea{background:#b5841a}
+.content-stats{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.cs-stat{background:#fff;border:1px solid #e4e4e4;border-radius:8px;padding:8px 14px;text-align:center;min-width:80px}
+.cs-num{font-size:20px;font-weight:800;color:#b5841a}
+.cs-lbl{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.04em}
+.del-row-btn{padding:5px 8px;border:1px solid #f0c0c0;border-radius:6px;background:#fff;color:#c04040;cursor:pointer;font-size:12px;margin-top:14px;font-family:inherit}
+.list-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e4e4e4;font-size:12px}
+.list-table th{background:#f7f6f3;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;border-bottom:1px solid #e4e4e4;white-space:nowrap}
+.list-table td{padding:9px 12px;border-bottom:1px solid #f5f5f5;vertical-align:top}
+.list-table tr:last-child td{border-bottom:none}
+.list-table tr:hover td{background:#fafaf8}
+.lt-name{font-weight:700;font-size:13px}
+.lt-name-link{cursor:pointer;color:#7a5010;transition:color .15s}
+.lt-name-link:hover{color:#c9860a;text-decoration:underline}
+.lt-react{font-size:10px}
+.lt-status{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;white-space:nowrap;display:inline-block}
+.lt-steps{display:flex;flex-wrap:wrap;gap:3px}
+.lt-step{font-size:9px;padding:1px 5px;border-radius:10px;background:#f0f0f0;color:#666;white-space:nowrap}
+.lt-step.on{background:#e8f5e8;color:#2d7a2d}
+.lt-step.gold{background:#fffbf0;color:#7a5010}
+.lt-step.red{background:#fff0f0;color:#8a2020}
+.lt-step.blue{background:#f0f4ff;color:#1a2a8a}
+.lt-step.purple{background:#f5f0ff;color:#4a0a9a}
+.lt-notes{font-size:11px;color:#777;max-width:220px}
+.lt-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.lt-toolbar input{flex:1;min-width:160px;border:1px solid #ddd;border-radius:7px;padding:7px 12px;font-size:13px;font-family:inherit}
+.lt-toolbar input:focus{outline:none;border-color:#b5841a}
+.lt-toolbar select{border:1px solid #ddd;border-radius:7px;padding:7px 12px;font-size:12px;font-family:inherit}
+.va-card{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.pipeline-bar{display:flex;gap:2px;margin:8px 0;align-items:center}
+.pip-step{flex:1;height:5px;border-radius:3px;background:#eee;position:relative;transition:.3s}
+.pip-step.done{background:#28a745}
+.pip-step.current{background:#b5841a}
+.pip-step.dead{background:#ddd}
+.pip-label{font-size:9px;color:#b5841a;font-weight:700;margin-top:3px;text-align:center}
+.pipeline-wrap{margin:6px 0 8px}
+.va-name{font-size:15px;font-weight:700;margin-bottom:6px}
+.va-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.va-field label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#aaa;display:block;margin-bottom:3px}
+.va-field input,.va-field select{width:100%;border:1px solid #eee;border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;background:#fafaf8}
+.va-field input:focus,.va-field select:focus{outline:none;border-color:#b5841a}
+.va-notes{width:100%;border:1px solid #eee;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;background:#fafaf8;margin-bottom:6px}
+.va-notes:focus{outline:none;border-color:#b5841a}
+.va-checks{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.va-flash{font-size:10px;color:#28a745;font-weight:700;height:14px}
+.event-card{background:#fff;border:1px solid #e4e4e4;border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.event-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.event-title{font-size:15px;font-weight:700}
+.event-meta{font-size:12px;color:#888;margin-top:3px}
+.event-btns{display:flex;gap:6px;flex-shrink:0}
+.event-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.ev-stat{background:#f7f6f3;border:1px solid #eee;border-radius:8px;padding:6px 12px;text-align:center;min-width:70px}
+.ev-stat-num{font-size:18px;font-weight:800;color:#b5841a}
+.ev-stat-lbl{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.04em}
+.attendee-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
+.attendee-card{background:#f7f6f3;border:1px solid #eee;border-radius:8px;padding:8px 10px;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.attendee-name{font-weight:600;font-size:12px}
+.ev-status-badge{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;white-space:nowrap}
+.ev-invited{background:#e3f2fd;color:#0d47a1}
+.ev-confirmed{background:#c8e6c9;color:#1b5e20}
+.ev-maybe{background:#fff3e0;color:#e65100}
+.ev-declined{background:#f5f5f5;color:#888}
+.ev-attended{background:#b5841a22;color:#7a5010;font-weight:800}
+.attend-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid #eee;background:#fafaf8;font-size:11px;font-weight:600;color:#555;transition:.15s;flex-shrink:0;user-select:none}
+.attend-toggle:hover{border-color:#b5841a55;background:#fffbf2}
+.attend-toggle.on{background:#fffbf0;border-color:#b5841a;color:#7a5010}
+.attend-toggle .att-box{width:14px;height:14px;border:1.5px solid #ccc;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;background:#fff;flex-shrink:0}
+.attend-toggle.on .att-box{background:#b5841a;border-color:#b5841a;color:#fff}
+.attend-section{margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0}
+.attend-section-title{font-size:10px;font-weight:700;text-transform:uppercase;color:#b5841a;letter-spacing:.05em;margin-bottom:8px}
+.attend-list{display:flex;flex-wrap:wrap;gap:6px}
+.attend-chip{background:#fffbf0;border:1px solid #b5841a44;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:#7a5010}
+.invite-item{background:#fff;border:1px solid #eee;border-radius:8px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.invite-item-name{font-size:13px;font-weight:600}
+.invite-status-sel{font-size:11px;border:1px solid #ddd;border-radius:6px;padding:4px 8px;font-family:inherit;background:#fff;cursor:pointer}
+
+.scripts-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.scriptpill{border:1px solid #e4e4e4;background:#fff;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#666;transition:all .15s}
+.scriptpill:hover{border-color:var(--sc);color:var(--sc)}
+.scriptpill.on{background:var(--sc);color:#fff;border-color:var(--sc)}
+.script-block{display:none}
+.script-block.on{display:block}
+.script-card{background:#fff;border:1px solid #e4e4e4;border-radius:12px;padding:20px 22px}
+.script-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.script-level{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:.03em}
+.script-title{font-size:16px;font-weight:700}
+.script-tagline{font-size:12px;color:#999;margin-bottom:12px}
+.script-goal{font-size:13px;line-height:1.55;background:#faf9f6;border:1px solid #eee;border-radius:8px;padding:11px 13px;margin-bottom:16px;color:#444}
+.script-step{border:1px solid #eee;border-radius:10px;padding:13px 15px;margin-bottom:11px;background:#fff}
+.script-step-head{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.script-step-n{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.script-step-title{font-size:13px;font-weight:700;flex:1}
+.script-copy{border:1px solid #e4e4e4;background:#fafaf8;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;color:#666;transition:all .15s;white-space:nowrap}
+.script-copy:hover{border-color:#b5841a;color:#b5841a}
+.script-copy.copied{background:#2f9e6f;color:#fff;border-color:#2f9e6f}
+.script-msg{font-size:13px;line-height:1.6;color:#222;background:#f7f6f3;border-radius:8px;padding:12px 14px;white-space:normal}
+.script-note{font-size:11.5px;color:#999;font-style:italic;margin-top:8px}
+.script-rules{margin-top:16px;background:#fdfaf3;border:1px solid #f0e6cf;border-radius:8px;padding:13px 16px}
+.script-rules-h{font-size:12px;font-weight:700;color:#8a6d1f;margin-bottom:8px}
+.script-rules ul{margin:0;padding-left:18px}
+.script-rules li{font-size:12.5px;line-height:1.7;color:#5c4d24}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">🏆 <span>RAWSOME</span> MISSION CONTROL</div>
+  <div class="save-badge" id="saveBadge"></div>
+  <div class="topbar-btns">
+    <button class="btn btn-dark" onclick="syncUpdates()">🔄 Sync Updates</button>
+    <button class="btn btn-dark" onclick="exportBackup()">⬇️ Backup</button>
+    <button class="btn btn-gold" onclick="openAdd()">+ Add Lead</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="showTab('dashboard',this)">🎯 Dashboard</button>
+    <button class="tab" onclick="showTab('list',this)">📄 Quick List</button>
+    <button class="tab" onclick="showTab('leads',this)">📋 Leads</button>
+    <button class="tab" onclick="showTab('events',this)">📅 Group Call Schedule</button>
+    <button class="tab" onclick="showTab('clients',this)">⭐ Active Clients</button>
+    <button class="tab" onclick="showTab('content',this)">📱 Social Content</button>
+    <button class="tab" onclick="showTab('va',this)">🌟 Super VA Leads</button>
+    <button class="tab" onclick="showTab('scripts',this)">📜 Scripts/SOP</button>
+</div>
+
+<div class="wrap">
+  <!-- DASHBOARD PANEL -->
+  <div class="panel on" id="panel-dashboard">
+    <div id="dashContent"></div>
+  </div>
+
+  <!-- LIST PANEL -->
+  <div class="panel" id="panel-list">
+    <div id="listContent"></div>
+  </div>
+
+  <!-- LEADS PANEL -->
+  <div class="panel" id="panel-leads">
+    <div class="stats" id="statsRow"></div>
+    <div class="toolbar">
+      <input type="text" id="searchQ" placeholder="🔍 Search name or notes..." oninput="render()">
+      <select id="fStatus" onchange="render()">
+        <option value="">All Statuses</option>
+        <option value="new">🆕 New</option>
+        <option value="msg1_sent">💬 Message Sent</option>
+        <option value="replied">✅ Replied</option>
+        <option value="recording_sent">🎥 Recording Sent</option>
+        <option value="invited">📅 Invited to Call</option>
+        <option value="confirmed">✅ Confirmed for Call</option>
+        <option value="attended">⭐ Attended Call</option>
+        <option value="nurture_12k">🌱 Nurturing for $12K</option>
+        <option value="converted">🏆 $97/m / $12K</option>
+        <option value="not_available">❌ Not Available</option>
+        <option value="not_interested">✗ Not Interested</option>
+        <option value="deactivated">🚫 Deactivated</option>
+      </select>
+      <select id="fReact" onchange="render()">
+        <option value="">All Reactions</option>
+        <option value="love">❤️ Love</option>
+        <option value="like">👍 Like</option>
+        <option value="comment">💬 Commented</option>
+      </select>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+
+
+  <!-- SUMMARY PANEL -->
+
+  <!-- CLIENTS PANEL -->
+  <div class="panel" id="panel-clients">
+    <div id="clientsContent"></div>
+  </div>
+
+  <!-- CONTENT PANEL -->
+  <div class="panel" id="panel-content">
+    <div id="contentPanel"></div>
+  </div>
+
+  <!-- VA PANEL -->
+  <div class="panel" id="panel-va">
+    <div id="vaContent"></div>
+  </div>
+
+  <!-- EVENTS PANEL -->
+  <div class="panel" id="panel-events">
+    <div id="eventsContent"></div>
+  </div>
+
+  <!-- SCRIPTS PANEL -->
+  <div class="panel" id="panel-scripts">
+    <div id="scriptsContent"></div>
+  </div>
+</div>
+
+<!-- Event Modal -->
+<div class="overlay" id="eventOverlay" style="display:none" onclick="if(event.target===this)closeEventModal()">
+  <div class="modal">
+    <h2 id="eventModalTitle">Add New Event</h2>
+    <input type="hidden" id="eMId">
+    <div class="fg"><label>Event Name</label><input type="text" id="eMName" placeholder="e.g. RAWSOME Academy — July Group Call"></div>
+    <div class="fg"><label>Date</label><input type="date" id="eMDate"></div>
+    <div class="fg"><label>Time</label><input type="text" id="eMTime" placeholder="e.g. 7:30AM SG / 9:30PM EST"></div>
+    <div class="fg"><label>Platform / Link</label><input type="text" id="eMLink" placeholder="e.g. Zoom link or Facebook Live"></div>
+    <div class="fg"><label>Notes</label><textarea id="eMNotes" placeholder="Any extra details..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn btn-gray" onclick="closeEventModal()">Cancel</button>
+      <button class="btn btn-red" id="eDelBtn" onclick="deleteEvent()" style="display:none">Delete Event</button>
+      <button class="btn btn-gold" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="overlay" id="inviteOverlay" style="display:none" onclick="if(event.target===this)closeInviteModal()">
+  <div class="modal" style="max-width:560px">
+    <h2 id="inviteModalTitle">Manage Invites</h2>
+    <input type="hidden" id="iMEventId">
+    <div style="margin-bottom:8px">
+      <input type="text" id="inviteSearch" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit" placeholder="🔍 Search leads..." oninput="renderInviteList()">
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="fb" onclick="setInviteFilter('',this)" id="ifAll" style="padding:4px 12px;border-radius:20px;border:1px solid #b5841a;color:#b5841a;font-size:11px;background:#fffbf2;font-weight:700;cursor:pointer;font-family:inherit">All</button>
+      <button class="fb" onclick="setInviteFilter('invited',this)" style="padding:4px 12px;border-radius:20px;border:1px solid #ddd;color:#777;font-size:11px;background:#fff;cursor:pointer;font-family:inherit">📩 Invited</button>
+      <button class="fb" onclick="setInviteFilter('confirmed',this)" style="padding:4px 12px;border-radius:20px;border:1px solid #ddd;color:#777;font-size:11px;background:#fff;cursor:pointer;font-family:inherit">✅ Confirmed</button>
+      <button class="fb" onclick="setInviteFilter('attended',this)" style="padding:4px 12px;border-radius:20px;border:1px solid #ddd;color:#777;font-size:11px;background:#fff;cursor:pointer;font-family:inherit">⭐ Attended</button>
+    </div>
+    <input type="hidden" id="inviteFilter">
+    <div id="inviteList" style="max-height:420px;overflow-y:auto;display:grid;gap:6px"></div>
+    <div class="modal-btns"><button class="btn btn-gold" onclick="closeInviteModal()">Done</button></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modalTitle">Add Lead</h2>
+    <input type="hidden" id="mId">
+    <div class="fg"><label>Name</label><input type="text" id="mName" placeholder="Full name"></div>
+    <div class="fg"><label>Reaction</label>
+      <select id="mReaction">
+        <option value="love">❤️ Love</option>
+        <option value="like">👍 Like</option>
+      </select>
+    </div>
+    <div class="fg"><label>Commented on Post?</label>
+      <select id="mCommented">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+    <div class="fg"><label>Status</label>
+      <select id="mStatus">
+        <option value="new">🆕 New</option>
+        <option value="msg1_sent">💬 Message Sent</option>
+        <option value="replied">✅ Replied</option>
+        <option value="recording_sent">🎥 Recording Sent</option>
+        <option value="invited">📅 Invited to Call</option>
+        <option value="confirmed">✅ Confirmed for Call</option>
+        <option value="attended">⭐ Attended Call</option>
+        <option value="nurture_12k">🌱 Nurturing for $12K</option>
+        <option value="converted">🏆 $97/m / $12K</option>
+        <option value="not_available">❌ Not Available</option>
+        <option value="not_interested">✗ Not Interested</option>
+        <option value="deactivated">🚫 Deactivated</option>
+      </select>
+    </div>
+    <div class="fg"><label>Notes</label><textarea id="mNotes" placeholder="e.g. Interested in coaching, follow up Friday..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-red" id="mDel" onclick="deleteLead()" style="display:none">Delete</button>
+      <button class="btn btn-gold" onclick="saveLead()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'r1000_leads_v3';
+// Simplified pipeline — in sequence order
+const STATUS_LABELS = {
+  new:'🆕 New',
+  msg1_sent:'💬 Message Sent',
+  replied:'✅ Replied',
+  recording_sent:'🎥 Recording Sent',
+  invited:'📅 Invited to Call',
+  confirmed:'✅ Confirmed for Call',
+  attended:'⭐ Attended Call',
+  nurture_12k:'🌱 Nurturing for $12K',
+  converted:'🏆 $97/m / $12K',
+  not_available:'❌ Not Available',
+  not_interested:'✗ Not Interested',
+  deactivated:'🚫 Deactivated',
+};
+
+// Maps old statuses to new simplified ones
+const STATUS_MAP_LEGACY = {
+  engage_posts:'replied', june20_invited:'invited', june20_accepted:'confirmed',
+  june20_maybe:'invited', checking_schedule:'invited', checking_timezone:'invited',
+  friday_invited:'invited', friday_accepted:'confirmed', friday_calendar:'confirmed',
+  waiting_email:'replied',
+};
+
+// Ordered pipeline stages (for progress display)
+const PIPELINE = ['new','msg1_sent','replied','recording_sent','invited','confirmed','attended','nurture_12k','converted'];
+const PIPELINE_LABELS = ['New','Msg Sent','Replied','Recording','Invited','Confirmed','Attended','Nurture $12K','$12K / R1000'];
+const STATUS_COLORS = {
+  new:'#bbb', msg1_sent:'#2a4acc', replied:'#28a745',
+  recording_sent:'#a05000', invited:'#0a5a9a', confirmed:'#1b5e20',
+  attended:'#e65100', nurture_12k:'#6a20c0', converted:'#b5841a',
+  not_available:'#888', not_interested:'#999', deactivated:'#8a0000',
+};
+const INACTIVE = ['not_available','not_interested','deactivated'];
+var NURTURE_LABELS = {
+  r1000: '🏆 $97/m',
+  rawsome_x: '🔥 RAWSOME X ($100K)',
+  superva: '🤝 Super VA Affiliate',
+  p1_referral: '⭐ P1 Referral'
+};
+
+// Normalize legacy statuses on load
+function normalizeLegacyStatus(status) {
+  return STATUS_MAP_LEGACY[status] || status;
+}
+
+const INITIAL = [{"id": 1, "name": "Promise Gabriel", "reaction": "like", "commented": true, "status": "checking_schedule", "notes": "Sent Calendar invite for July 10th Call", "msg1_sent": true, "updatedAt": 1782971868233, "step_new": true, "step_ongoing": true, "step_invited": true, "step_chat_sent": true, "step_recording": true, "step_confirmed": true, "in_fb_group": true}, {"id": 2, "name": "Faith Draper LeLievre", "reaction": "like", "commented": true, "status": "engage_posts", "notes": "warmed up the chat since she has not replied from last chat\n", "msg1_sent": true, "updatedAt": 1782971892843, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "in_fb_group": true}, {"id": 3, "name": "Camille Beausoleil", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "She has not replied after 3 messages. Cold lead", "msg1_sent": true, "updatedAt": 1782802915833, "step_new": true, "step_chat_sent": true, "step_cold": true}, {"id": 4, "name": "Chaudhry Sajid", "reaction": "like", "commented": true, "status": "june20_invited", "notes": "He attended the spotlight session with Andrew, then he said he's not interested in purchasing anything paid.", "msg1_sent": true, "updatedAt": 1782803032352, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "step_invited": true, "step_attended": true, "step_offered_97": false, "step_declined": true}, {"id": 5, "name": "Nicola Mc Glynn", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782803216416, "step_new": true, "step_ongoing": true, "step_chat_sent": true}, {"id": 6, "name": "Sheila Patt", "reaction": "like", "commented": true, "status": "friday_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782803340910, "step_new": true, "step_ongoing": true, "step_chat_sent": true}, {"id": 7, "name": "Tuula Fai", "reaction": "like", "commented": false, "status": "june20_accepted", "notes": "We're nurturing her for Super VA referral, declined $97/m offer", "msg1_sent": true, "updatedAt": 1782803700300, "step_new": true, "step_ongoing": true, "step_invited": true, "step_attended": true, "step_chat_sent": true, "step_recording": true, "step_confirmed": true, "step_offered_97": true, "step_declined": true}, {"id": 8, "name": "Reuben Rancourt", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782815166658, "step_new": true, "step_ongoing": true, "step_chat_sent": true}, {"id": 9, "name": "Richard Que", "reaction": "like", "commented": false, "status": "not_available", "notes": "Hold off on chatting in the meantime.", "msg1_sent": true, "updatedAt": 1782815473265, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "step_invited": true, "step_recording": true}, {"id": 10, "name": "Allecia Maine", "reaction": "like", "commented": false, "status": "friday_accepted", "notes": "", "msg1_sent": true, "updatedAt": 1782815504959, "step_new": true, "step_ongoing": true, "step_chat_sent": true}, {"id": 11, "name": "Zeb Kai Kok Lim", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782816020689, "step_ongoing": true, "step_new": true, "step_chat_sent": true}, {"id": 13, "name": "Ajmal Theodore Khan", "reaction": "like", "commented": false, "status": "friday_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782816177861, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "step_invited": true}, {"id": 14, "name": "Allison Leonard Rappaport", "reaction": "like", "commented": false, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782816782651, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "step_invited": true}, {"id": 15, "name": "Otto Fong", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782816946497, "step_new": true, "step_ongoing": true, "step_chat_sent": true}, {"id": 16, "name": "Xrene Wong", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782817164172, "step_new": true, "step_ongoing": true, "step_chat_sent": true}, {"id": 17, "name": "Lisa Chong", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782817207384, "step_new": true, "step_ongoing": false, "step_chat_sent": true}, {"id": 18, "name": "Foo Chong", "reaction": "like", "commented": false, "status": "not_interested", "notes": "He said he is not interested", "msg1_sent": true, "updatedAt": 1782817963481, "step_new": true, "step_chat_sent": true, "step_ongoing": true, "step_declined": true}, {"id": 19, "name": "Aaron Lim", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "He did not reply om the message, cold lead", "msg1_sent": true, "updatedAt": 1782818200447, "step_new": true, "step_chat_sent": true, "step_cold": true}, {"id": 20, "name": "Natalie Duncan", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "He did not reply om the message, cold lead\n", "msg1_sent": true, "updatedAt": 1782818328509, "step_new": true, "step_chat_sent": true}, {"id": 21, "name": "Dorz Doll", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "He did not reply om the message, cold lead", "msg1_sent": true, "updatedAt": 1782818402497, "step_new": true, "step_chat_sent": true, "step_cold": true}, {"id": 22, "name": "Marc Riemer", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "He did not reply om the message, cold lead", "msg1_sent": true, "updatedAt": 1782818430707, "step_new": true, "step_chat_sent": true, "step_cold": true}, {"id": 23, "name": "Billy Tan", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782818460883, "step_new": true, "step_chat_sent": true, "step_cold": true}, {"id": 24, "name": "Julie Adamo", "reaction": "like", "commented": false, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782818487302, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "step_invited": true}, {"id": 25, "name": "Terence Lai", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782818693956, "step_new": true, "step_ongoing": true, "step_chat_sent": true}, {"id": 26, "name": "Chin M C Mkt", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 27, "name": "Nadezhda Khvorostian", "reaction": "like", "commented": true, "status": "june20_accepted", "notes": "Invited to July 10th call", "msg1_sent": true, "updatedAt": 1782973677842, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "step_recording": true, "step_confirmed": true, "step_invited": true, "step_attended": false, "in_fb_group": true}, {"id": 28, "name": "\u5929\u751f\u8d56", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "6/30, Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/\n", "msg1_sent": true, "updatedAt": 1782799124998}, {"id": 29, "name": "Joshua Toh", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 30, "name": "Ranguru Jeremy", "reaction": "like", "commented": false, "status": "june20_accepted", "notes": "6/30, Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/\nInvited to July 10th call\n", "msg1_sent": true, "updatedAt": 1782973853422, "step_new": true, "step_ongoing": true, "step_invited": true, "step_confirmed": true, "step_recording": true, "step_chat_sent": true, "step_attended": true, "in_fb_group": true}, {"id": 31, "name": "Jamie Humphris", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 32, "name": "Caleb Bowen Eliason", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 33, "name": "Mohamed Saad", "reaction": "like", "commented": true, "status": "deactivated", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 34, "name": "Philippa Holding", "reaction": "love", "commented": false, "status": "june20_invited", "notes": "6/30 Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/\n", "msg1_sent": true, "updatedAt": 1782798911705}, {"id": 35, "name": "Maite Barbe", "reaction": "love", "commented": true, "status": "not_available", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 36, "name": "Kezia Luckett", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 37, "name": "Samira Neuhaus", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 38, "name": "Prashant Sheth", "reaction": "love", "commented": true, "status": "june20_accepted", "notes": "Invited to July 10th call\nInvited to FB Group", "msg1_sent": true, "updatedAt": 1782974390253, "step_new": true, "step_ongoing": true, "step_invited": true, "step_recording": true, "step_chat_sent": true, "step_confirmed": true}, {"id": 39, "name": "Marianne McGuire", "reaction": "love", "commented": true, "status": "not_interested", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 40, "name": "Jennifer Grant", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 41, "name": "Twee Shaw", "reaction": "love", "commented": true, "status": "not_available", "notes": "", "msg1_sent": true, "updatedAt": 1783324606904, "step_new": true, "step_chat_sent": true, "step_ongoing": true, "step_invited": true, "step_confirmed": true, "step_attended": false, "step_offered_97": false, "step_r1000": false, "step_nurture_12k": false, "step_12k": false}, {"id": 42, "name": "Helena Soh-Chin", "reaction": "love", "commented": true, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 43, "name": "Junie Soe", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 44, "name": "Gina Couture", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 45, "name": "Evangelia Kolaitis", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 46, "name": "Carol McGregor", "reaction": "love", "commented": true, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 47, "name": "Jeremy Asriel", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 48, "name": "JJ Raschel", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 49, "name": "Kimberly Shane", "reaction": "love", "commented": false, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 50, "name": "Candice Auld", "reaction": "love", "commented": false, "status": "not_available", "notes": "6/30, Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/\n", "msg1_sent": true, "updatedAt": 1782798968339}, {"id": 51, "name": "Annika Nilson", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 52, "name": "Ksenia Cuenco", "reaction": "love", "commented": true, "status": "june20_accepted", "notes": "6/30, Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "msg1_sent": true, "updatedAt": 1782974530263, "step_new": true, "step_ongoing": true, "step_invited": true, "step_chat_sent": true, "step_recording": true, "step_confirmed": true, "step_attended": true, "in_fb_group": true}, {"id": 53, "name": "Irene M Gathuru", "reaction": "love", "commented": true, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 54, "name": "Dang Tam", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 55, "name": "Dee Wells", "reaction": "love", "commented": false, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 56, "name": "Sue Rouillard High", "reaction": "love", "commented": true, "status": "not_available", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 57, "name": "Maria Maksymytz", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 58, "name": "Naya Lizarraga", "reaction": "love", "commented": true, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 59, "name": "Archie Sharma", "reaction": "love", "commented": true, "status": "june20_maybe", "notes": "Invited to group page", "msg1_sent": true, "updatedAt": 1782975595973, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "step_invited": true}, {"id": 60, "name": "Albina Porracin", "reaction": "love", "commented": true, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 61, "name": "Sandy Esparon", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1783410988352, "step_declined": true, "lead_source": ""}, {"id": 62, "name": "Jesse Cloud", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 63, "name": "Liz Rankin", "reaction": "love", "commented": true, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 64, "name": "Armanda Ho", "reaction": "love", "commented": true, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 65, "name": "Ann M Kesselman", "reaction": "love", "commented": false, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 66, "name": "Rene\u00e9 Van Eeden", "reaction": "love", "commented": true, "status": "checking_timezone", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 67, "name": "Stacy Phoenix", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 68, "name": "Teresa Wolfe", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 69, "name": "Altheus Lovee", "reaction": "love", "commented": true, "status": "june20_invited", "notes": "", "msg1_sent": false, "updatedAt": 1782504428081}, {"id": 70, "name": "Miguel Angelo Rosales", "reaction": "love", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 71, "name": "Debbie Gray", "reaction": "love", "commented": false, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 72, "name": "Sheree Millar", "reaction": "love", "commented": true, "status": "june20_invited", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 73, "name": "Dick Lam", "reaction": "love", "commented": true, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 74, "name": "Aimee Emejas", "reaction": "love", "commented": false, "status": "june20_maybe", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 75, "name": "Lori A. Hood", "reaction": "love", "commented": true, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 77, "name": "Sohayla Smith", "reaction": "love", "commented": false, "status": "checking_timezone", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 78, "name": "Nathan Goode", "reaction": "love", "commented": true, "status": "june20_maybe", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 79, "name": "Lisa Clausen", "reaction": "love", "commented": true, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782504428081}, {"id": 80, "name": "Jackie M Cheng", "reaction": "love", "commented": false, "status": "friday_accepted", "notes": "", "msg1_sent": false, "updatedAt": 1782504428081}, {"id": 81, "name": "TJ Shimeld", "reaction": "love", "commented": false, "status": "june20_accepted", "notes": "", "msg1_sent": false, "updatedAt": 1782504428081}, {"name": "Crystal Zeng", "reaction": "like", "commented": true, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/\nHer profile doesn't have much post..", "updatedAt": 1782974843679, "id": "new_1782798872843", "msg1_sent": false, "step_new": true, "step_chat_sent": true}, {"name": "Dai Gor Zai", "reaction": "like", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782798932109, "id": "new_1782798932109", "msg1_sent": false}, {"name": "Le Hong", "reaction": "like", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782798946327, "id": "new_1782798946327", "msg1_sent": false}, {"name": "Penny Dinh", "reaction": "like", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782798989753, "id": "new_1782798989753", "msg1_sent": false}, {"name": "Deborah Choong", "reaction": "like", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782799022156, "id": "new_1782799022156", "msg1_sent": false}, {"name": "Nelle Bilcliffe", "reaction": "like", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782799038923, "id": "new_1782799038923", "msg1_sent": false}, {"name": "Alfanso Petty Jr.", "reaction": "love", "commented": true, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782799282500, "id": "new_1782799084042", "msg1_sent": false}, {"name": "Elena Chovancak", "reaction": "love", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782799094867, "id": "new_1782799094867", "msg1_sent": false}, {"name": "Anna Maria Moro", "reaction": "love", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782799109237, "id": "new_1782799109237", "msg1_sent": false}, {"name": "Rene\u0117 Van Eeden", "reaction": "love", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782799153251, "id": "new_1782799153251", "msg1_sent": false}, {"name": "Terri Vincent", "reaction": "love", "commented": false, "status": "new", "notes": "Engaged on this post https://www.facebook.com/share/v/1FNzqrbwnr/", "updatedAt": 1782799171457, "id": "new_1782799171457", "msg1_sent": false}, {"id": "i11", "name": "Jason Bradshaw", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1782971797296}, {"name": "Dott Chu", "reaction": "love", "commented": false, "status": "converted", "notes": "", "updatedAt": 1784184665582, "id": "new_1782973193170", "msg1_sent": true, "step_new": true, "step_ongoing": true, "step_chat_sent": true, "step_recording": true, "step_confirmed": true, "step_offered_97": true, "step_attended": true, "step_invited": true, "step_r1000": true, "ignite_sent": true, "in_fb_group": true}, {"name": "Jeff Yeo", "reaction": "love", "commented": false, "status": "converted", "notes": "", "updatedAt": 1784184665582, "id": "new_1782973241608", "msg1_sent": true, "step_new": true, "step_ongoing": true, "step_invited": true, "step_chat_sent": true, "step_recording": true, "step_confirmed": true, "step_offered_97": true, "step_attended": true, "in_fb_group": true, "ignite_sent": true, "step_r1000": true}, {"id": "i93", "name": "\u9ec4\u56fd\u680b", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i94", "name": "John Goh", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i95", "name": "Calvin Keng Foo", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i96", "name": "Man Long So", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i97", "name": "Chris Chase", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i98", "name": "Lori Ann Hood", "reaction": "like", "commented": false, "status": "replied", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i99", "name": "Stephanie Ann Scott", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i100", "name": "Thian R Kim", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i101", "name": "Jesarielle Damora", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i102", "name": "Benny Neo", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i103", "name": "William Curry", "reaction": "like", "commented": false, "status": "replied", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i104", "name": "Wahyu Iin", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i105", "name": "Miss Daisy", "reaction": "like", "commented": false, "status": "replied", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i106", "name": "Alan Joshua Cumigad Pedro IV", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i107", "name": "Ruby-Ann Burton", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i108", "name": "\u9673\u8056\u5b89", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i109", "name": "Kim Le", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i110", "name": "Jakub Rosi\u0144ski", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i111", "name": "Alaric Teng", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i112", "name": "Jam Manayon D", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i113", "name": "Jose Pablo Martinez", "reaction": "like", "commented": false, "status": "replied", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i114", "name": "Noy Shani", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i115", "name": "Brett Gordon", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i116", "name": "Lisa Chai", "reaction": "like", "commented": false, "status": "converted", "notes": "", "msg1_sent": true, "updatedAt": 1784184665582, "step_new": true, "step_chat_sent": true, "step_ongoing": true, "step_invited": true, "step_confirmed": true, "step_attended": true, "step_offered_97": true, "step_r1000": true}, {"id": "i117", "name": "Janda Pang", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i118", "name": "Raewyn Mitchell", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i119", "name": "Dexter Nan Zhang", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i120", "name": "Natasha Matronitsky", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i121", "name": "Niky Hamilton", "reaction": "like", "commented": false, "status": "replied", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i122", "name": "Dan Drunez", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i123", "name": "Vanessa Kestelboim", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i124", "name": "Dee Matoe", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i125", "name": "Almeta Lim", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i126", "name": "Kura Kanavatoa", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i127", "name": "Anna Haveron", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i128", "name": "Dionis Chua", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i129", "name": "Khai Abu Nain", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i130", "name": "Takondwa Hara", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i131", "name": "Lianna Cabreros", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i132", "name": "Ag Faizul Afiq", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i133", "name": "Jack Ng", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i134", "name": "Adin Barnabas Alphonsus Lim", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i135", "name": "Preeti Purohit", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i136", "name": "Sapari St Sapari", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i137", "name": "Robin Wakeham", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i138", "name": "Nur Syazwanni", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i139", "name": "Eric Chau", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i140", "name": "Celine Law", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i141", "name": "Craig A Hoy", "reaction": "like", "commented": false, "status": "replied", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i142", "name": "Natalie McDonald", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i143", "name": "\u660e\u8056", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i144", "name": "Kanphasit Kueana", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i145", "name": "Shane Bird", "reaction": "like", "commented": false, "status": "replied", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i146", "name": "Patricia Stirbys", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i147", "name": "Alan Yu", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i148", "name": "Eve Lee", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i149", "name": "Richmond Dinh", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i150", "name": "Canaoay Chester", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i151", "name": "Jeff Mesina", "reaction": "like", "commented": false, "status": "msg1_sent", "notes": "", "msg1_sent": true, "updatedAt": 1783075256658}, {"id": "i152", "name": "Steven Lau", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i153", "name": "Mike Michael II", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i154", "name": "KEvin Goh", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i155", "name": "Hui Hui Lek", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"id": "i156", "name": "Ukpong Nwankwo", "reaction": "like", "commented": false, "status": "new", "notes": "", "msg1_sent": false, "updatedAt": 1783075256658}, {"name": "Agnes Lim", "reaction": "love", "commented": false, "status": "new", "notes": "", "updatedAt": 1783406712400, "id": "new_1783406712400", "msg1_sent": false}, {"name": "Daiyan", "reaction": "love", "commented": false, "status": "new", "notes": "", "updatedAt": 1783406743096, "id": "new_1783406743096", "msg1_sent": false}, {"name": "Gian Shaw", "reaction": "love", "commented": false, "status": "new", "notes": "", "updatedAt": 1783493277667, "id": "new_1783493277667", "msg1_sent": false}, {"name": "Emma Lenehan", "reaction": "love", "commented": false, "status": "new", "notes": "Dott's friend from Bootcamp", "updatedAt": 1783494452156, "id": "new_1783494452156", "msg1_sent": false}, {"name": "Gulnara Magadeyeva", "reaction": "love", "commented": false, "status": "new", "notes": "", "updatedAt": 1783578867284, "id": "new_1783578867284", "msg1_sent": false}];
+
+let leads = [];
+
+// ── STORAGE ──────────────────────────────────────────
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+  showSaved();
+}
+
+// Full backup of every data key → downloadable JSON file
+var BACKUP_KEYS = ['r1000_leads_v3','r1000_clients_v1','r1000_content_v1','r1000_events_v1','r1000_va_v1'];
+function exportBackup() {
+  var dump = { _app:'RAWSOME MISSION CONTROL', _version:1, _exportedAt:new Date().toISOString(), data:{} };
+  BACKUP_KEYS.forEach(function(k){
+    var raw = localStorage.getItem(k);
+    if (raw != null) dump.data[k] = raw;
+  });
+  var blob = new Blob([JSON.stringify(dump, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var stamp = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = 'rawsome_backup_' + stamp + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+
+// Re-applies the latest known updates to whatever is in saved data.
+// Fixes cases where the saved copy is out of sync (e.g. Conversions showing 2 not 3).
+function syncUpdates() {
+  var report = [];
+  // 1) $97/m signups — dedupe duplicates, then flag
+  var SIGNED_97 = [['jeff','yeo'],['lisa','chai'],['dott','chu']];
+  SIGNED_97.forEach(function(parts) {
+    var matches = leads.filter(function(l){
+      var nm = (l.name||'').trim().toLowerCase();
+      return parts.every(function(p){ return nm.indexOf(p) >= 0; });
+    });
+    if (matches.length === 0) { report.push('⚠️ Not found: ' + parts.join(' ')); return; }
+    // If duplicates exist, keep the first and remove the rest
+    var keep = matches[0];
+    if (matches.length > 1) {
+      var removeIds = matches.slice(1).map(function(l){ return l.id; });
+      leads = leads.filter(function(l){ return removeIds.indexOf(l.id) < 0; });
+      report.push('Merged ' + matches.length + ' duplicate records for ' + keep.name);
+    }
+    keep.step_new=true; keep.step_chat_sent=true; keep.step_ongoing=true; keep.step_invited=true;
+    keep.step_confirmed=true; keep.step_attended=true; keep.step_offered_97=true; keep.step_r1000=true;
+    keep.status='converted'; keep.msg1_sent=true; keep.updatedAt=Date.now();
+  });
+  // 2) Safety sweep: anyone flagged signed $97/m counts as converted
+  leads.forEach(function(l){ if (l.step_r1000 && l.status !== 'converted') l.status = 'converted'; });
+
+  save();
+  // Also patch the July 10 event confirmations
+  try {
+    var ev = events.find(function(e){ return e.id === 'ev_1782973992117' || (e.name||'').indexOf('Dott Chu') >= 0; });
+    if (ev) {
+      if (!ev.invites) ev.invites = {};
+      ['Dott Chu','Nadezhda Khvorostian','Promise Gabriel','Sohayla Smith','Ranguru Jeremy','Twee Shaw','Daiyan','Agnes Lim','Gulnara Magadeyeva','Emma Lenehan'].forEach(function(n){ ev.invites[n] = 'confirmed'; });
+      ev.invites['Jeff Yeo'] = 'maybe';
+      ev.invites['Philippa Holding'] = 'declined';
+      saveEvents();
+    }
+  } catch(e) {}
+
+  // Restore any missing seed content posts (merge by id, don't wipe user's own)
+  var contentAdded = 0;
+  try {
+    var existingCids = {};
+    contentItems.forEach(function(c){ existingCids[c.id] = true; });
+    CONTENT_SEED.forEach(function(seed){
+      if (!existingCids[seed.id]) { contentItems.push(Object.assign({}, seed)); contentAdded++; }
+    });
+    if (contentAdded > 0) saveContent();
+    if (typeof renderContentTab === 'function') renderContentTab();
+  } catch(e) {}
+
+  render();
+  renderDashboard();
+  var conv = leads.filter(function(l){ return l.step_r1000; }).length;
+  alert('Sync complete.\n$97/m conversions: ' + conv + '\nContent posts restored: ' + contentAdded + '\n' + (report.length ? report.join('\n') : 'All lead records up to date.'));
+}
+
+function showSaved() {
+  const el = document.getElementById('saveBadge');
+  const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  el.textContent = '✓ Saved at ' + t;
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      leads = JSON.parse(raw);
+      // Merge in any INITIAL leads not yet in saved storage (full objects, all fields)
+      const names = new Set(leads.map(l => (l.name||'').toLowerCase()));
+      INITIAL.forEach(function(l) {
+        if (!names.has((l.name||'').toLowerCase())) {
+          leads.push(JSON.parse(JSON.stringify(l)));
+        }
+      });
+    } else {
+      leads = JSON.parse(JSON.stringify(INITIAL));
+      save();
+    }
+  } catch(e) {
+    console.error('Load error:', e);
+    leads = JSON.parse(JSON.stringify(INITIAL));
+  }
+  render();
+  renderStats();
+}
+
+// ── RENDER LEADS ─────────────────────────────────────
+function getFiltered() {
+  var q = document.getElementById('searchQ').value.toLowerCase();
+  var fs = document.getElementById('fStatus').value;
+  var fr = document.getElementById('fReact').value;
+  return leads.filter(function(l) {
+    if (q && l.name.toLowerCase().indexOf(q) < 0 && (l.notes||'').toLowerCase().indexOf(q) < 0) return false;
+    if (fs && l.status !== fs) return false;
+    if (fr === 'love' && l.reaction !== 'love') return false;
+    if (fr === 'like' && l.reaction !== 'like') return false;
+    if (fr === 'comment' && !l.commented) return false;
+    return true;
+  });
+}
+
+function pipChk(lid, field, val, label, colorCls) {
+  var cls = val ? 'pip-chk ' + colorCls : 'pip-chk';
+  return '<div class="' + cls + ' pip-chk-item" data-id="' + lid + '" data-field="' + field + '" data-color="' + colorCls + '">' +
+    '<div class="pc-box">' + (val ? '&#10003;' : '') + '</div><span>' + label + '</span></div>';
+}
+
+function chkBox(lid, field, val, label, color) {
+  var cls = val ? 'chk-item ck-' + color : 'chk-item';
+  var tick = val ? '&#10003;' : '';
+  return '<div class="' + cls + '" data-id="' + lid + '" data-field="' + field + '" data-color="' + color + '">' +
+    '<div class="chk-box">' + tick + '</div><span>' + label + '</span></div>';
+}
+
+
+var J_STAGES = [
+  {f:"step_new",       i:"🆕", l:"New"},
+  {f:"step_chat_sent", i:"💬", l:"Chat Sent"},
+  {f:"step_ongoing",   i:"🔄", l:"Replied"},
+  {f:"step_invited",   i:"📅", l:"Invited"},
+  {f:"step_confirmed", i:"✅", l:"Confirmed"},
+  {f:"step_attended",  i:"⭐", l:"Attended"},
+  {f:"step_offered_97",i:"💛", l:"Offered $97"},
+  {f:"step_r1000",     i:"🏆", l:"Signed $97/m"},
+  {f:"step_nurture_12k",i:"🌱",l:"Nurture $12K"},
+  {f:"step_12k",       i:"💰", l:"$12K ✅"}
+];
+var J_FLAGS = [
+  {f:"step_recording", c:"jf-recording", i:"🎥", l:"Recording Sent"},
+  {f:"step_followup",  c:"jf-followup",  i:"🔄", l:"Follow Up Later"},
+  {f:"step_cold",      c:"jf-cold",      i:"🧊", l:"Cold Lead"},
+  {f:"step_declined",  c:"jf-declined",  i:"❌", l:"Declined"}
+];
+
+function buildJourney(lead) {
+  var lastDone = -1;
+  J_STAGES.forEach(function(s,i){ if(lead[s.f]) lastDone=i; });
+  var html = '<div class="sec-lbl">Journey Stage</div><div class="journey-wrap">';
+  html += '<div class="journey-stages">';
+  J_STAGES.forEach(function(s, i) {
+    var done = !!lead[s.f];
+    var active = done && (i === lastDone);
+    var cls = 'j-stage j-stage-item' + (active ? ' j-active' : done ? ' j-done' : '');
+    html += '<div class="' + cls + '" data-id="' + lead.id + '" data-field="' + s.f + '">';
+    html += '<span class="j-num">' + (done ? '&#10003;' : (i+1)) + '</span>';
+    html += '<span class="j-icon">' + s.i + '</span>';
+    html += '<span class="j-lbl">' + s.l + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<div class="j-flags">';
+  J_FLAGS.forEach(function(f) {
+    var on = !!lead[f.f];
+    html += '<div class="j-flag ' + f.c + (on ? ' jf-on' : '') + ' j-flag-item" data-id="' + lead.id + '" data-field="' + f.f + '">';
+    html += '<div class="jf-box">' + (on ? '&#10003;' : '') + '</div>';
+    html += f.i + ' ' + f.l + '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function render() {
+  renderStats();
+  var filtered = getFiltered();
+  var grid = document.getElementById('grid');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty-state">No leads found.</div>';
+    return;
+  }
+  var html = '';
+  filtered.forEach(function(lead) {
+    var dim = INACTIVE.indexOf(lead.status) >= 0 ? ' dim' : '';
+    var color = STATUS_COLORS[lead.status] || '#999';
+    var sLabel = STATUS_LABELS[lead.status] || lead.status;
+    html += '<div class="card' + dim + '" id="card-' + lead.id + '" data-id="' + lead.id + '">';
+    html += '<div class="card-head">';
+    html += '<div>';
+    html += '<div class="card-name">' + escHtml(lead.name) + '</div>';
+    html += '</div></div>';
+    html += '<button class="edit-btn">✏️ Edit</button>';
+    html += '</div>';
+    html += '<div style="margin-bottom:6px">';
+    html += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#aaa;margin-bottom:3px">📍 Lead Source</div>';
+    html += '<textarea class="lead-source-inp" data-id="' + lead.id + '" placeholder="Where did this lead come from?" rows="2" style="width:100%;border:1px solid #eee;border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;background:#fafaf8;resize:none">' + escHtml(lead.lead_source||'') + '</textarea>';
+    html += '</div>';
+    var nOpts2 = [
+      {v:'r1000',l:'🏆 $97/m'},
+      {v:'rawsome_x',l:'🔥 RAWSOME X ($100K)'},
+      {v:'superva',l:'🤝 Super VA Affiliate'},
+      {v:'p1_referral',l:'⭐ P1 Referral'}
+    ];
+    var nForArr = Array.isArray(lead.nurture_for) ? lead.nurture_for : (lead.nurture_for ? [lead.nurture_for] : []);
+    html += '<div class="sec-lbl" style="margin-top:6px">🎯 Nurturing For</div><div class="checks-grid">';
+    nOpts2.forEach(function(o){
+      var checked = nForArr.indexOf(o.v) >= 0;
+      html += '<div class="' + (checked?'chk-item ck-gold nurture-chk':'chk-item nurture-chk') + '" data-id="' + lead.id + '" data-val="' + o.v + '"><div class="chk-box">' + (checked?'&#10003;':'') + '</div>' + o.l + '</div>';
+    });
+    html += '</div>';
+    html += '<textarea class="notes-ta" placeholder="Add notes here...">' + escHtml(lead.notes||'') + '</textarea>';
+    html += buildJourney(lead);
+    // Legacy tracking checkboxes
+    html += '<div class="sec-lbl" style="margin-top:8px">Admin</div>';
+    html += '<div class="checks-grid">';
+    html += chkBox(lead.id,'ignite_sent',lead.ignite_sent,'📧 Welcome Email Sent','green');
+    html += chkBox(lead.id,'in_fb_chat',lead.in_fb_chat,'💬 Joined Group Chat','green');
+    html += chkBox(lead.id,'in_fb_group',lead.in_fb_group,'👥 In FB Revolution Group','green');
+    html += '</div>';
+    html += '<div class="sec-lbl" style="margin-top:6px">💬 Group Chats</div>';
+    html += '<div class="checks-grid">';
+    html += chkBox(lead.id,'gc_ignite',lead.gc_ignite,'🔥 RAWSOME Ignite','green');
+    html += chkBox(lead.id,'gc_love',lead.gc_love,'💛 RAWSOME Love Mastery','green');
+    html += chkBox(lead.id,'gc_gratitude',lead.gc_gratitude,'🙏 RAWSOME Gratitude 365','green');
+    html += chkBox(lead.id,'gc_x',lead.gc_x,'🔥 RAWSOME X WhatsApp','gold');
+    html += '</div>';
+    html += '<div class="saved-flash" id="flash-' + lead.id + '"></div>';
+    html += '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function renderStats() {
+  var total = leads.length;
+  var signed12k = leads.filter(function(l){ return l.signed_12k; }).length;
+  var nurture12k = leads.filter(function(l){ return l.nurture_12k; }).length;
+  var contacted = leads.filter(function(l){ return l.status && l.status !== 'new'; }).length;
+  var jun20 = leads.filter(function(l){ return l.status === 'june20_accepted'; }).length;
+  var converted = leads.filter(function(l){ return l.status === 'converted'; }).length;
+  var inactive = leads.filter(function(l){ return INACTIVE.indexOf(l.status) >= 0; }).length;
+  document.getElementById('statsRow').innerHTML =
+    stat(total, 'Total') + stat(contacted, 'Contacted') + stat(signed12k, '💰 $12K', '#b5841a') + stat(nurture12k, '🌱 Nurture', '#28a745') +
+    stat(converted, '🏆 R1000', '#b5841a') +
+    stat(inactive, 'Inactive', '#888');
+}
+
+function stat(n, l, c) {
+  return '<div class="sbox"><div class="snum"' + (c?' style="color:'+c+'"':'') + '>' + n + '</div><div class="slbl">' + l + '</div></div>';
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── UPDATE ────────────────────────────────────────────
+function updateStatus(id, status) {
+  var lead = findLead(id);
+  if (!lead) return;
+  lead.status = status;
+  lead.updatedAt = Date.now();
+  save();
+  flash(id);
+}
+
+function updateNotes(id, notes) {
+  var lead = findLead(id);
+  if (!lead) return;
+  lead.notes = notes;
+  lead.updatedAt = Date.now();
+  save();
+  flash(id);
+}
+
+function flash(id) {
+  var el = document.getElementById('flash-' + id);
+  if (el) { el.textContent = '✓ Saved'; setTimeout(function(){ el.textContent=''; }, 1500); }
+}
+
+function findLead(id) {
+  // Compare as both string and number
+  return leads.find(function(l){ return String(l.id) === String(id); });
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function openAdd() {
+  document.getElementById('modalTitle').textContent = 'Add New Lead';
+  document.getElementById('mId').value = '';
+  document.getElementById('mName').value = '';
+  document.getElementById('mReaction').value = 'love';
+  document.getElementById('mCommented').value = '0';
+  document.getElementById('mStatus').value = 'new';
+  document.getElementById('mNotes').value = '';
+  document.getElementById('mDel').style.display = 'none';
+  document.getElementById('overlay').style.display = 'flex';
+}
+
+function openEdit(id) {
+  var lead = findLead(id);
+  if (!lead) return;
+  document.getElementById('modalTitle').textContent = 'Edit Lead';
+  document.getElementById('mId').value = id;
+  document.getElementById('mName').value = lead.name;
+  document.getElementById('mReaction').value = lead.reaction || 'love';
+  document.getElementById('mCommented').value = lead.commented ? '1' : '0';
+  document.getElementById('mStatus').value = lead.status || 'new';
+  document.getElementById('mNotes').value = lead.notes || '';
+  document.getElementById('mDel').style.display = 'inline-block';
+  document.getElementById('overlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function saveLead() {
+  var id = document.getElementById('mId').value;
+  var name = document.getElementById('mName').value.trim();
+  if (!name) { alert('Please enter a name'); return; }
+  var data = {
+    name: name,
+    reaction: document.getElementById('mReaction').value,
+    commented: document.getElementById('mCommented').value === '1',
+    status: document.getElementById('mStatus').value,
+    notes: document.getElementById('mNotes').value,
+    updatedAt: Date.now()
+  };
+  if (id) {
+    var lead = findLead(id);
+    if (lead) Object.assign(lead, data);
+  } else {
+    data.id = 'new_' + Date.now();
+    data.msg1_sent = false;
+    leads.push(data);
+  }
+  save();
+  closeModal();
+  render();
+}
+
+function deleteLead() {
+  var id = document.getElementById('mId').value;
+  if (!id || !confirm('Remove this lead?')) return;
+  leads = leads.filter(function(l){ return String(l.id) !== String(id); });
+  save();
+  closeModal();
+  render();
+}
+
+// ── TABS ──────────────────────────────────────────────
+function switchToTab(name) {
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) {
+    var oc = tabs[i].getAttribute('onclick') || '';
+    if (oc.indexOf("'" + name + "'") > -1 || oc.indexOf('"' + name + '"') > -1) {
+      showTab(name, tabs[i]);
+      return;
+    }
+  }
+}
+function showTab(name, el) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('on'); });
+  el.classList.add('on');
+  document.getElementById('panel-' + name).classList.add('on');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'list') renderListView();
+  if (name === 'events') renderEventsTab();
+  if (name === 'va') renderVATab();
+  if (name === 'clients') renderClientsTab();
+  if (name === 'content') renderContentTab();
+  if (name === 'scripts') renderScriptsTab();
+}
+
+// Jump from Quick List (or anywhere) to a lead's profile card in the Leads dashboard
+function gotoLead(id) {
+  // Switch to the Leads tab
+  var leadsTabBtn = Array.prototype.slice.call(document.querySelectorAll('.tab')).find(function(t){
+    return /Leads/.test(t.textContent);
+  });
+  if (leadsTabBtn) showTab('leads', leadsTabBtn);
+  // Clear any board filters that might hide the card
+  try {
+    var sq = document.getElementById('searchQ'); if (sq) sq.value = '';
+    var fs = document.getElementById('fStatus'); if (fs) fs.value = '';
+    var fr = document.getElementById('fReact'); if (fr) fr.value = '';
+  } catch(e) {}
+  // Re-render so the card exists
+  if (typeof render === 'function') render();
+  // Scroll to and highlight the card
+  setTimeout(function(){
+    var card = document.getElementById('card-' + id);
+    if (!card) { alert('This lead is not visible in the current Leads view (it may be filtered out).'); return; }
+    card.scrollIntoView({behavior:'smooth', block:'center'});
+    card.classList.add('card-flash');
+    setTimeout(function(){ card.classList.remove('card-flash'); }, 2200);
+  }, 60);
+}
+
+
+// ── SUMMARY ───────────────────────────────────────────
+
+var listQ = '', listFS = '', listFR = '';
+
+function renderListView() {
+  var q = listQ.toLowerCase();
+  var filtered = leads.filter(function(l) {
+    if (q && l.name.toLowerCase().indexOf(q) < 0 && (l.notes||'').toLowerCase().indexOf(q) < 0) return false;
+    if (listFS && l.status !== listFS) return false;
+    if (listFR === 'love' && l.reaction !== 'love') return false;
+    if (listFR === 'like' && l.reaction !== 'like') return false;
+    if (listFR === 'comment' && !l.commented) return false;
+    return true;
+  });
+
+  var STEPS = [
+    {f:'step_new',l:'New',c:''},
+    {f:'step_chat_sent',l:'Chat Sent',c:'blue'},
+    {f:'step_ongoing',l:'Ongoing',c:''},
+    {f:'step_recording',l:'Recording',c:'blue'},
+    {f:'step_invited',l:'Invited',c:'blue'},
+    {f:'step_confirmed',l:'Confirmed',c:''},
+    {f:'step_attended',l:'Attended',c:'gold'},
+    {f:'step_offered_97',l:'Offered $97',c:'gold'},
+    {f:'step_r1000',l:'R1000 ✅',c:'gold'},
+    {f:'step_nurture_12k',l:'Nurture $12K',c:'purple'},
+    {f:'step_12k',l:'$12K ✅',c:'purple'},
+    {f:'step_declined',l:'Declined',c:'red'},
+    {f:'step_followup',l:'Follow Up',c:'blue'},
+    {f:'step_cold',l:'Cold',c:'red'},
+  ];
+
+  var html = '<div class="lt-toolbar">' +
+    '<input type="text" placeholder="🔍 Search..." oninput="listQ=this.value;renderListView()" value="' + escHtml(listQ) + '">' +
+    '<select onchange="listFS=this.value;renderListView()">' +
+    '<option value="">All Statuses</option>' +
+    Object.keys(STATUS_LABELS).map(function(s){ return '<option value="' + s + '"' + (listFS===s?' selected':'') + '>' + STATUS_LABELS[s] + '</option>'; }).join('') +
+    '</select>' +
+    '<select onchange="listFR=this.value;renderListView()">' +
+    '<option value="">All Reactions</option>' +
+    '<option value="love"' + (listFR==='love'?' selected':'') + '>❤️ Love</option>' +
+    '<option value="like"' + (listFR==='like'?' selected':'') + '>👍 Like</option>' +
+    '<option value="comment"' + (listFR==='comment'?' selected':'') + '>💬 Commented</option>' +
+    '</select>' +
+    '<span style="font-size:12px;color:#999;align-self:center">' + filtered.length + ' leads</span>' +
+    '</div>';
+
+  html += '<div style="overflow-x:auto"><table class="list-table">';
+  html += '<thead><tr>' +
+    '<th>#</th><th>Name</th><th>🎯 Nurturing For</th><th>Journey Steps</th><th>Notes</th><th>Admin</th>' +
+    '</tr></thead><tbody>';
+
+  filtered.forEach(function(lead, i) {
+    var color = STATUS_COLORS[lead.status] || '#999';
+    var sLabel = STATUS_LABELS[lead.status] || lead.status || '';
+
+    var stepsHtml = '<div class="lt-steps">';
+    STEPS.forEach(function(s) {
+      if (lead[s.f]) {
+        stepsHtml += '<span class="lt-step ' + (s.c ? 'on' : 'on') + (s.c === 'gold' ? ' gold' : s.c === 'red' ? ' red' : s.c === 'blue' ? ' blue' : s.c === 'purple' ? ' purple' : '') + '">' + s.l + '</span>';
+      }
+    });
+    stepsHtml += '</div>';
+
+    var adminHtml = '';
+    if (lead.ignite_sent) adminHtml += '<span class="lt-step on">📧 Ignite</span> ';
+    if (lead.in_fb_group) adminHtml += '<span class="lt-step on">👥 FB Group</span> ';
+    if (lead.in_fb_chat) adminHtml += '<span class="lt-step on">💬 FB Chat</span> ';
+    if (lead.lead_magnet_sent) adminHtml += '<span class="lt-step blue">📄 1-Pager</span> ';
+
+    var nArr = Array.isArray(lead.nurture_for) ? lead.nurture_for : (lead.nurture_for ? [lead.nurture_for] : []);
+    var nLabel = nArr.map(function(v){ return NURTURE_LABELS[v]||v; }).join(', ');
+    html += '<tr>' +
+      '<td style="color:#bbb;font-size:11px">' + (i+1) + '</td>' +
+      '<td><div class="lt-name lt-name-link" onclick="gotoLead(\'' + lead.id + '\')" title="Click to view lead profile in Leads dashboard">' + escHtml(lead.name) + '</div>' +
+        '<span class="lt-status" style="background:' + color + '22;color:' + color + '">' + escHtml(sLabel) + '</span></td>' +
+      '<td><span style="font-size:11px;font-weight:600;color:#7a5010">' + escHtml(nLabel) + '</span></td>' +
+      '<td>' + stepsHtml + '</td>' +
+      '<td class="lt-notes">' + escHtml((lead.notes||'').substring(0,80)) + (lead.notes&&lead.notes.length>80?'...':'') + '</td>' +
+      '<td><div class="lt-steps">' + adminHtml + '</div></td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('listContent').innerHTML = html;
+}
+
+// ── ACTIVE CLIENTS ────────────────────────────────────
+const CLIENT_KEY = 'r1000_clients_v1';
+var clients = [];
+
+function loadClients() {
+  var DEFAULT_CLIENTS = [{"id": "cl_terri_vincent", "name": "Terri Vincent", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000000", "name": "Nicholas Loo", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000001", "name": "Cynthia Chen", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000002", "name": "Andrew Wang", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000003", "name": "Cheehau Phan", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000004", "name": "Lisa Chai", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000005", "name": "Mic Kwan", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000006", "name": "Celine Law", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000007", "name": "Alice Yip", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}, {"id": "cl_1783000008", "name": "Hendry Lai", "plan": "100k", "signup": "", "expiry": "", "notes": "", "calls": [], "cancelled": false, "admin_email": false, "admin_paid": false, "admin_wa": false, "renewal_date": ""}];
+  try {
+    var raw = localStorage.getItem(CLIENT_KEY);
+    if (raw) {
+      clients = JSON.parse(raw);
+      // Migrate all existing clients to $100K plan
+      clients.forEach(function(c) { if (c.plan === '97' || c.plan === 'r1000') c.plan = '100k'; });
+      // Merge in any new default clients not already saved
+      var savedNames = new Set(clients.map(function(c){ return c.name.toLowerCase(); }));
+      DEFAULT_CLIENTS.forEach(function(dc) {
+        if (!savedNames.has(dc.name.toLowerCase())) {
+          clients.push(dc);
+        }
+      });
+      saveClients();
+    } else {
+      clients = DEFAULT_CLIENTS;
+      saveClients();
+    }
+  } catch(e) {
+    clients = DEFAULT_CLIENTS;
+  }
+}
+
+function saveClients() {
+  localStorage.setItem(CLIENT_KEY, JSON.stringify(clients));
+  showSaved();
+}
+
+function findClient(id) { return clients.find(function(c){ return c.id === id; }); }
+
+function adminChk(cid, field, val, label) {
+  var cls = val ? 'admin-chk ac-on' : 'admin-chk';
+  return '<div class="' + cls + ' admin-chk-item" data-cid="' + cid + '" data-field="' + field + '">' +
+    '<div class="ac-box">' + (val ? '&#10003;' : '') + '</div>' + label + '</div>';
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  var d = new Date(dateStr + 'T12:00:00');
+  return Math.round((d - new Date()) / 86400000);
+}
+
+function expiryBadge(dateStr) {
+  if (!dateStr) return '';
+  var days = daysUntil(dateStr);
+  var cls = days > 30 ? 'expiry-badge exp-ok' : days > 7 ? 'expiry-badge exp-soon' : 'expiry-badge exp-red';
+  var lbl = days < 0 ? 'Expired ' + Math.abs(days) + 'd ago' : days === 0 ? 'Expires today!' : 'Expires in ' + days + 'd';
+  return '<span class="' + cls + '">' + lbl + '</span>';
+}
+
+function renderClientsTab() {
+  var active = clients.filter(function(c){ return c.plan && !c.cancelled; }).length;
+  var expiring = clients.filter(function(c){ var d=daysUntil(c.expiry); return d!==null&&d>=0&&d<=30; }).length;
+
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+    '<div><div style="font-size:17px;font-weight:700">⭐ Active Clients</div>' +
+    '<div style="font-size:12px;color:#999;margin-top:2px">Track contracts, expiry dates and monthly calls</div></div>' +
+    '<button class="btn btn-gold" onclick="addClient()">+ Add Client</button></div>';
+
+  html += '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">' +
+    '<div class="sbox" style="min-width:90px"><div class="snum">' + clients.length + '</div><div class="slbl">Total</div></div>' +
+    '<div class="sbox" style="min-width:90px"><div class="snum" style="color:#28a745">' + active + '</div><div class="slbl">Active</div></div>' +
+    '<div class="sbox" style="min-width:90px"><div class="snum" style="color:#e65100">' + expiring + '</div><div class="slbl">⚠️ Expiring</div></div>' +
+    '</div>';
+
+  if (!clients.length) {
+    html += '<div class="empty-state">No clients yet. Click + Add Client to get started.</div>';
+    document.getElementById('clientsContent').innerHTML = html;
+    return;
+  }
+
+  clients.forEach(function(c) {
+    var planCls = c.plan === '12k' ? 'client-plan plan-12k' : c.plan === '100k' ? 'client-plan plan-100k' : c.plan === 'unicorn' ? 'client-plan plan-unicorn' : 'client-plan plan-97';
+    var planLbl = c.plan === '12k' ? '💰 $12K Client' : c.plan === '100k' ? '🔥 RAWSOME X $100K' : c.plan === 'unicorn' ? '🦄 Unicorn Client' : c.plan === '97' ? '🏆 $97/m' : '📋 ' + (c.plan||'No plan set');
+    html += '<div class="client-card" id="cc-' + c.id + '">';
+    html += '<div class="client-header">';
+    html += '<div><div class="client-name">' + escHtml(c.name) + '</div>' +
+      '<span class="' + planCls + '">' + planLbl + '</span>' +
+      (c.cancelled ? '<span class="expiry-badge exp-red" style="margin-left:6px">❌ Cancelled</span>' : '') +
+      '</div>';
+    html += '<div style="display:flex;gap:6px">';
+    html += '<button class="edit-btn client-edit-btn" data-cid="' + c.id + '">✏️ Edit</button>';
+    html += '<button class="edit-btn client-del-btn" data-cid="' + c.id + '" style="color:#dc3545;border-color:#f0c0c0">🗑</button>';
+    html += '</div></div>';
+
+    html += '<div class="client-fields">';
+    html += '<div class="cf-group"><div class="cf-label">📅 Signed Up</div><input type="date" class="cf-input" data-cid="' + c.id + '" data-field="signup" value="' + (c.signup||'') + '"></div>';
+    html += '<div class="cf-group"><div class="cf-label">⏳ Contract Expires ' + expiryBadge(c.expiry) + '</div><input type="date" class="cf-input" data-cid="' + c.id + '" data-field="expiry" value="' + (c.expiry||'') + '"></div>';
+    html += '<div class="cf-group"><div class="cf-label">📋 Notes</div><input type="text" class="cf-input" data-cid="' + c.id + '" data-field="notes" value="' + escHtml(c.notes||'') + '" placeholder="Any notes..."></div>';
+    html += '</div>';
+
+    // Monthly calls
+    html += '<div class="client-calls">';
+    html += '<div class="client-calls-title"><span>📞 Monthly Calls</span>' +
+      '<button class="add-call-btn add-call-trigger" data-cid="' + c.id + '">+ Add Call</button></div>';
+    (c.calls||[]).forEach(function(call, ci) {
+      html += '<div class="call-entry" id="call-' + c.id + '-' + ci + '">' +
+        '<input type="date" class="call-date-inp" data-cid="' + c.id + '" data-ci="' + ci + '" value="' + (call.date||'') + '" placeholder="Date">' +
+        '<input type="text" class="call-topic-inp" data-cid="' + c.id + '" data-ci="' + ci + '" value="' + escHtml(call.topic||'') + '" placeholder="Topic / notes">' +
+        '<button class="call-del call-del-btn" data-cid="' + c.id + '" data-ci="' + ci + '">✕</button>' +
+        '</div>';
+    });
+    html += '</div>';
+    // Admin Stage
+    html += '<div class="admin-stage">';
+    html += '<div class="admin-stage-title">⚙️ Admin Stage</div>';
+    html += '<div class="admin-checks">';
+    html += adminChk(c.id, 'admin_email', c.admin_email, '📧 Welcome Email Sent');
+    html += adminChk(c.id, 'admin_paid', c.admin_paid, '💳 Service Paid');
+    html += adminChk(c.id, 'admin_wa', c.admin_wa, '💬 3-Way WhatsApp Chat Created');
+    html += '</div>';
+    html += '<div class="renewal-row"><label>🔄 Renewal Date</label><input type="date" class="client-renewal" data-cid="' + c.id + '" value="' + (c.renewal_date||'') + '"></div>';
+    html += '</div>';
+    html += '<div class="client-flash" id="cfl-' + c.id + '"></div>';
+    html += '</div>';
+  });
+
+  document.getElementById('clientsContent').innerHTML = html;
+
+  // Delegation
+  document.getElementById('clientsContent').addEventListener('click', function(e) {
+    var del = e.target.closest('.client-del-btn');
+    if (del) { var id=del.getAttribute('data-cid'); if(confirm('Remove client?')){clients=clients.filter(function(c){return c.id!==id;}); saveClients(); renderClientsTab();} return; }
+    var edit = e.target.closest('.client-edit-btn');
+    if (edit) { openClientModal(edit.getAttribute('data-cid')); return; }
+    var cdel = e.target.closest('.call-del-btn');
+    if (cdel) { removeCall(cdel.getAttribute('data-cid'), parseInt(cdel.getAttribute('data-ci'))); return; }
+    var addCallBtn = e.target.closest('.add-call-trigger');
+    if (addCallBtn) { addCall(addCallBtn.getAttribute('data-cid')); return; }
+    // Admin checkbox toggle
+    var achk = e.target.closest('.admin-chk-item');
+    if (achk) {
+      var id = achk.getAttribute('data-cid');
+      var field = achk.getAttribute('data-field');
+      var c = findClient(id);
+      if (!c) return;
+      c[field] = !c[field];
+      saveClients();
+      cFlash(id);
+      achk.className = c[field] ? 'admin-chk ac-on admin-chk-item' : 'admin-chk admin-chk-item';
+      achk.querySelector('.ac-box').innerHTML = c[field] ? '&#10003;' : '';
+    }
+  }, {once:false});
+
+  document.getElementById('clientsContent').addEventListener('change', function(e) {
+    var el = e.target;
+    var cid = el.getAttribute('data-cid');
+    if (!cid) return;
+    var field = el.getAttribute('data-field');
+    var ci = el.getAttribute('data-ci');
+    if (el.classList.contains('client-renewal')) {
+      var c = findClient(cid); if(c){ c.renewal_date = el.value; saveClients(); cFlash(cid); }
+    } else if (ci !== null) {
+      updateCall(cid, parseInt(ci), el.classList.contains('call-date-inp') ? 'date' : 'topic', el.value);
+    } else if (field) {
+      updateClientField2(cid, field, el.value);
+    }
+  }, {once:false});
+}
+
+function updateClientField2(id, field, val) {
+  var c = findClient(id);
+  if (!c) return;
+  c[field] = val;
+  saveClients();
+  cFlash(id);
+  if (field === 'expiry') renderClientsTab();
+}
+
+function updateClientField(el, field) {
+  var id = el.getAttribute('data-cid');
+  var c = findClient(id);
+  if (!c) return;
+  c[field] = el.value;
+  saveClients();
+  cFlash(id);
+  if (field === 'expiry') renderClientsTab(); // re-render to update badge
+}
+
+function updateCall(cid, ci, field, val) {
+  var c = findClient(cid);
+  if (!c || !c.calls || !c.calls[ci]) return;
+  c.calls[ci][field] = val;
+  saveClients();
+  cFlash(cid);
+}
+
+function addCall(cid) {
+  var c = findClient(cid);
+  if (!c) return;
+  if (!c.calls) c.calls = [];
+  c.calls.push({date:'', topic:''});
+  saveClients();
+  renderClientsTab();
+}
+
+function removeCall(cid, ci) {
+  var c = findClient(cid);
+  if (!c || !c.calls) return;
+  c.calls.splice(ci, 1);
+  saveClients();
+  renderClientsTab();
+}
+
+function cFlash(id) {
+  var el = document.getElementById('cfl-' + id);
+  if (el) { el.textContent='✓ Saved'; setTimeout(function(){ el.textContent=''; }, 1500); }
+}
+
+function addClient() {
+  var name = prompt('Client name:');
+  if (!name || !name.trim()) return;
+  var plan = prompt('Choose plan: 97 for Rawsome $97/m, 12k for $12K, other for Other');
+
+
+
+
+  var planVal = plan==='1'?'97':plan==='2'?'12k':'other';
+  clients.push({id:'cl_'+Date.now(), name:name.trim(), plan:planVal, signup:'', expiry:'', notes:'', calls:[], cancelled:false});
+  saveClients();
+  renderClientsTab();
+}
+
+function openClientModal(id) {
+  var c = findClient(id);
+  if (!c) return;
+  var name = prompt('Edit client name:', c.name);
+  if (name === null) return;
+  var plan = prompt('Plan (97 / 12k / other):', c.plan);
+  c.name = name || c.name;
+  c.plan = plan || c.plan;
+  saveClients();
+  renderClientsTab();
+}
+
+// ── SOCIAL CONTENT ─────────────────────────────────────
+const CONTENT_KEY = 'r1000_content_v1';
+var contentItems = [];
+
+var CONTENT_SEED = [{"id": "ct_seed_1783200000000", "title": "FB Reel \u2014 June/July (edit title)", "platform": "Facebook", "type": "Reel", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/r/1EuW67WnhN/"}, {"id": "ct_seed_1783200000001", "title": "FB Reel \u2014 June/July (edit title)", "platform": "Facebook", "type": "Reel", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/r/19Z5rgkLPw/"}, {"id": "ct_seed_1783200000002", "title": "FB Post \u2014 June/July (edit title)", "platform": "Facebook", "type": "Post", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/p/19Kg8LnMUZ/"}, {"id": "ct_seed_1783200000003", "title": "FB Reel \u2014 June/July (edit title)", "platform": "Facebook", "type": "Reel", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/r/171WMKGPWo/"}, {"id": "ct_seed_1783200000004", "title": "FB Video \u2014 June/July (edit title)", "platform": "Facebook", "type": "Video", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/v/1EpEnvKxux/"}, {"id": "ct_seed_1783200000005", "title": "FB Post \u2014 June/July (edit title)", "platform": "Facebook", "type": "Post", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/p/14hcbMthGzh/"}, {"id": "ct_seed_1783200000006", "title": "FB Video \u2014 June/July (edit title)", "platform": "Facebook", "type": "Video", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/v/18qrXh6iGn/"}, {"id": "ct_seed_1783200000007", "title": "FB Video \u2014 June/July (edit title)", "platform": "Facebook", "type": "Video", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/v/1Gpfn4XxmB/"}, {"id": "ct_seed_1783200000008", "title": "FB Reel \u2014 June/July (edit title)", "platform": "Facebook", "type": "Reel", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/r/1DCJjTcDvg/"}, {"id": "ct_seed_1783200000009", "title": "FB Reel \u2014 June/July (edit title)", "platform": "Facebook", "type": "Reel", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/r/19H79aa5qn/"}, {"id": "ct_seed_1783200000010", "title": "FB Reel \u2014 June/July (edit title)", "platform": "Facebook", "type": "Reel", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/r/1cbK4hgkvN/"}, {"id": "ct_seed_1783200000011", "title": "FB Video \u2014 June/July (edit title)", "platform": "Facebook", "type": "Video", "status": "posted", "date": "", "notes": "https://www.facebook.com/share/v/18e4CAz4vt/"}];
+function loadContent() {
+  try {
+    var raw = localStorage.getItem(CONTENT_KEY);
+    var parsed = raw ? JSON.parse(raw) : null;
+    // If nothing saved, or an empty array was saved by an older build, use the seed
+    if (!parsed || !parsed.length) {
+      contentItems = CONTENT_SEED.slice();
+      saveContent();
+    } else {
+      contentItems = parsed;
+    }
+  } catch(e) { contentItems = CONTENT_SEED.slice(); }
+}
+
+function saveContent() {
+  localStorage.setItem(CONTENT_KEY, JSON.stringify(contentItems));
+  showSaved();
+}
+
+var CONTENT_STATUSES = {idea:'💡 Idea', draft:'✏️ Draft', scheduled:'📅 Scheduled', posted:'✅ Posted'};
+var CONTENT_PLATFORMS = ['Facebook','Instagram','Both','LinkedIn','TikTok','YouTube'];
+var CONTENT_TYPES = ['Reel','Post','Story','Live','Carousel','Video'];
+
+function renderContentTab() {
+  var counts = {idea:0,draft:0,scheduled:0,posted:0};
+  contentItems.forEach(function(c){ if(counts[c.status]!==undefined) counts[c.status]++; });
+
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+    '<div><div style="font-size:17px;font-weight:700">📱 Social Content</div>' +
+    '<div style="font-size:12px;color:#999;margin-top:2px">Plan, schedule and track your content</div></div>' +
+    '<button class="btn btn-gold" id="addContentBtn">+ Add Content</button></div>';
+
+  html += '<div class="content-stats">' +
+    '<div class="cs-stat"><div class="cs-num" style="color:#b5841a">' + counts.idea + '</div><div class="cs-lbl">💡 Ideas</div></div>' +
+    '<div class="cs-stat"><div class="cs-num" style="color:#888">' + counts.draft + '</div><div class="cs-lbl">✏️ Drafts</div></div>' +
+    '<div class="cs-stat"><div class="cs-num" style="color:#2a4acc">' + counts.scheduled + '</div><div class="cs-lbl">📅 Scheduled</div></div>' +
+    '<div class="cs-stat"><div class="cs-num" style="color:#28a745">' + counts.posted + '</div><div class="cs-lbl">✅ Posted</div></div>' +
+    '</div>';
+
+  // Filter tabs
+  html += '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
+  ['','idea','draft','scheduled','posted'].forEach(function(s) {
+    var lbl = s ? CONTENT_STATUSES[s] : 'All (' + contentItems.length + ')';
+    html += '<button data-filter="' + s + '" class="fb content-filter-btn" style="padding:5px 14px;border-radius:20px;border:1px solid ' + (s===contentFilter?'#b5841a':'#ddd') + ';background:' + (s===contentFilter?'#fffbf2':'#fff') + ';color:' + (s===contentFilter?'#b5841a':'#777') + ';font-size:11px;cursor:pointer;font-family:inherit">' + lbl + '</button>';
+  });
+  html += '</div>';
+
+  var filtered = contentFilter ? contentItems.filter(function(c){ return c.status===contentFilter; }) : contentItems;
+  filtered.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+
+  if (!filtered.length) {
+    html += '<div class="empty-state">No content here yet. Click + Add Content!</div>';
+    document.getElementById('contentPanel').innerHTML = html;
+    var addBtnE = document.getElementById('addContentBtn');
+    if (addBtnE) addBtnE.onclick = addContentItem;
+    return;
+  }
+
+  filtered.forEach(function(item) {
+    var statusColor = item.status==='posted'?'#28a745':item.status==='scheduled'?'#2a4acc':item.status==='draft'?'#888':'#b5841a';
+    var dateLabel = item.status==='posted' ? 'Posted Date' : 'Scheduled Date';
+    var id = item.id;
+
+    var platformOpts = CONTENT_PLATFORMS.map(function(p){ return '<option value="'+p+'"'+(item.platform===p?' selected':'')+'>'+p+'</option>'; }).join('');
+    var typeOpts = CONTENT_TYPES.map(function(t){ return '<option value="'+t+'"'+(item.type===t?' selected':'')+'>'+t+'</option>'; }).join('');
+    var statusOpts = Object.keys(CONTENT_STATUSES).map(function(s){ return '<option value="'+s+'"'+(item.status===s?' selected':'')+'>'+CONTENT_STATUSES[s]+'</option>'; }).join('');
+
+    html += '<div class="content-card" id="cc2-' + id + '">';
+    html += '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:end">';
+    html += '<div class="content-field"><label>Title / Caption Idea</label>';
+    html += '<input type="text" class="content-inp" data-cid="' + id + '" data-field="title" value="' + escHtml(item.title||'') + '" placeholder="What is this content about?"></div>';
+    html += '<div class="content-field"><label>Platform</label>';
+    html += '<select class="content-inp" data-cid="' + id + '" data-field="platform">' + platformOpts + '</select></div>';
+    html += '<div class="content-field"><label>Type</label>';
+    html += '<select class="content-inp" data-cid="' + id + '" data-field="type">' + typeOpts + '</select></div>';
+    html += '<div class="content-field"><label>Status</label>';
+    html += '<select class="content-inp content-sel" data-cid="' + id + '" data-field="status">' + statusOpts + '</select></div>';
+    html += '<div class="content-field"><label>' + dateLabel + '</label>';
+    html += '<input type="date" class="content-inp" data-cid="' + id + '" data-field="date" value="' + (item.date||'') + '"></div>';
+    html += '<button class="del-row-btn content-del-btn" data-cid="' + id + '">🗑</button>';
+    html += '</div>';
+    html += '<div class="content-field"><label>Notes / Caption</label>';
+    html += '<textarea class="content-inp" data-cid="' + id + '" data-field="notes" placeholder="Draft caption, key message, hook...">' + escHtml(item.notes||'') + '</textarea></div>';
+    html += '<div class="client-flash" id="cfl2-' + id + '"></div>';
+    html += '</div>';
+  });
+
+  document.getElementById('contentPanel').innerHTML = html;
+
+  var cp = document.getElementById('contentPanel');
+  if (cp && !cp._handlersBound) {
+    cp._handlersBound = true;
+    cp.addEventListener('click', function(e) {
+      var del = e.target.closest('.content-del-btn');
+      if (del) {
+        var id = del.getAttribute('data-cid');
+        if (confirm('Delete this content item?')) {
+          contentItems = contentItems.filter(function(c){ return c.id !== id; });
+          saveContent(); renderContentTab();
+        }
+        return;
+      }
+      var fb = e.target.closest('.content-filter-btn');
+      if (fb) { contentFilter = fb.getAttribute('data-filter'); renderContentTab(); return; }
+    });
+    cp.addEventListener('change', function(e) {
+      var el = e.target;
+      var cid = el.getAttribute('data-cid');
+      var field = el.getAttribute('data-field');
+      if (!cid || !field) return;
+      updateContent(cid, field, el.value);
+      if (el.classList.contains('content-sel')) renderContentTab();
+    });
+  }
+
+  var addBtn = document.getElementById('addContentBtn');
+  if (addBtn) addBtn.onclick = addContentItem;
+}
+
+var contentFilter = '';
+function filterContent(val, btn) {
+  contentFilter = val;
+  renderContentTab();
+}
+
+function updateContent(id, field, val) {
+  var item = contentItems.find(function(c){ return c.id===id; });
+  if (!item) return;
+  item[field] = val;
+  saveContent();
+  var fl = document.getElementById('cfl2-' + id);
+  if (fl) { fl.textContent='✓ Saved'; setTimeout(function(){ fl.textContent=''; }, 1500); }
+}
+
+function addContentItem() {
+  contentItems.unshift({id:'ct_'+Date.now(), title:'', platform:'Facebook', type:'Reel', status:'idea', date:'', notes:''});
+  saveContent();
+  renderContentTab();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDashboard() {
+  var now = new Date();
+  var today = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  // ── KEY METRICS ──────────────────────────────────
+  var totalLeads = leads.length;
+  var contacted = leads.filter(function(l){ return l.step_chat_sent; }).length;
+  var ongoing = leads.filter(function(l){ return l.step_ongoing; }).length;
+  var r1000 = leads.filter(function(l){ return l.step_r1000; }).length;
+  var signed12k = leads.filter(function(l){ return l.step_12k; }).length;
+  var coldLeads = leads.filter(function(l){ return l.step_cold; }).length;
+  var declined = leads.filter(function(l){ return l.step_declined; }).length;
+  var totalClients2 = clients.length;
+  var cPosted2 = contentItems.filter(function(c){ return c.status==='posted'; }).length;
+  var cSched2 = contentItems.filter(function(c){ return c.status==='scheduled'; }).length;
+
+  // ── UPCOMING CALLS ───────────────────────────────
+  var upcomingEvs = events.filter(function(e){
+    return e.date && new Date(e.date+'T12:00:00') >= now;
+  }).sort(function(a,b){ return a.date.localeCompare(b.date); });
+
+  // ── NEEDS FOLLOW UP ──────────────────────────────
+  var followUp = leads.filter(function(l){ return l.step_followup && !l.step_r1000 && !l.step_12k; });
+  var hotLeads = leads.filter(function(l){ return l.step_ongoing && !l.step_invited && !l.step_r1000; });
+  var readyToInvite = leads.filter(function(l){ return l.step_ongoing && !l.step_invited && !l.step_cold && !l.step_declined; });
+
+  // ── EXPIRING CLIENTS ─────────────────────────────
+  var expiringNow = clients.filter(function(c){
+    var d = daysUntil(c.expiry); return d !== null && d >= 0 && d <= 14;
+  });
+
+  // ── CONTENT ALERTS ───────────────────────────────
+  var contentDraft = contentItems.filter(function(c){ return c.status==='draft'; });
+  var contentSched = contentItems.filter(function(c){
+    return c.status==='scheduled' && c.date && new Date(c.date+'T12:00:00') >= now;
+  }).sort(function(a,b){ return a.date.localeCompare(b.date); });
+
+  var planLabels3 = {'97':'🏆 $97/m','r1000':'🏆 $97/m','12k':'💰 $12K','100k':'🔥 $100K','other':'📋 Other'};
+
+  var html = '';
+
+  // Today banner
+  html += '<div class="today-banner">' +
+    '<div><div style="font-size:13px;font-weight:700;color:#7a5010">📅 ' + today + '</div>' +
+    '<div style="font-size:11px;color:#a07020;margin-top:2px">Your RAWSOME MISSION CONTROL — everything in one place 💛</div></div>' +
+    '<button class="btn btn-gold btn-sm" onclick="renderDashboard()" style="font-size:11px;padding:6px 14px">🔄 Refresh</button>' +
+    '</div>';
+
+  // Quick Actions
+  html += '<div class="quick-actions">' +
+    '<button class="qa-btn dash-tab-btn" data-tab="list">📄 View Quick List</button>' +
+    '<button class="qa-btn dash-tab-btn" data-tab="leads">📋 All Leads</button>' +
+    '<button class="qa-btn dash-add-lead">➕ Add Lead</button>' +
+    '<button class="qa-btn dash-tab-btn" data-tab="clients">⭐ Active Clients</button>' +
+    '<button class="qa-btn dash-tab-btn" data-tab="events">📅 Group Calls</button>' +
+    '<button class="qa-btn dash-tab-btn" data-tab="content">📱 Social Content</button>' +
+    '</div>';
+
+  // KPI Row
+  html += '<div class="kpi-row">';
+  html += '<div class="kpi-box"><div class="kpi-num">' + totalLeads + '</div><div class="kpi-lbl">Total Leads</div><div class="kpi-sub">' + contacted + ' contacted</div></div>';
+  html += '<div class="kpi-box"><div class="kpi-num" style="color:#28a745">' + totalClients2 + '</div><div class="kpi-lbl">Active Clients</div><div class="kpi-sub">' + (expiringNow.length?'⚠️ '+expiringNow.length+' expiring':'All good ✅') + '</div></div>';
+  html += '<div class="kpi-box"><div class="kpi-num" style="color:#b5841a">' + (r1000+signed12k) + '</div><div class="kpi-lbl">Conversions</div><div class="kpi-sub">$97/m: ' + r1000 + ' · $12K: ' + signed12k + '</div></div>';
+  html += '<div class="kpi-box"><div class="kpi-num" style="color:#2a4acc">' + cSched2 + '</div><div class="kpi-lbl">Content Scheduled</div><div class="kpi-sub">' + cPosted2 + ' posted total</div></div>';
+  html += '<div class="kpi-box"><div class="kpi-num" style="color:#e65100">' + followUp.length + '</div><div class="kpi-lbl">Follow Up</div><div class="kpi-sub">need attention</div></div>';
+  html += '<div class="kpi-box"><div class="kpi-num" style="color:#6a20c0">' + readyToInvite.length + '</div><div class="kpi-lbl">Ready to Invite</div><div class="kpi-sub">ongoing chats</div></div>';
+  html += '</div>';
+
+  html += '<div class="dash-grid">';
+
+  // ── ACTION ITEMS ──────────────────────────────────
+  var actionItems = [];
+  followUp.slice(0,5).forEach(function(l){ actionItems.push({name:l.name, note:'Needs follow up', color:'#e65100', tag:'🔄 Follow Up'}); });
+  expiringNow.slice(0,3).forEach(function(c){ actionItems.push({name:c.name, note:'Contract expiring in ' + daysUntil(c.expiry) + 'd', color:'#c62828', tag:'⏳ Client'}); });
+  contentDraft.slice(0,3).forEach(function(c){ actionItems.push({name:c.title||'Untitled content', note:'Draft content waiting', color:'#888', tag:'📝 Draft'}); });
+
+  var actionHtml = actionItems.length ? actionItems.map(function(a){
+    return '<div class="action-item"><div class="action-dot" style="background:'+a.color+'"></div>' +
+      '<div style="flex:1"><div class="action-name">'+escHtml(a.name)+'</div><div class="action-note">'+escHtml(a.note)+'</div></div>' +
+      '<span class="action-tag" style="background:'+a.color+'22;color:'+a.color+'">'+a.tag+'</span></div>';
+  }).join('') : '<div style="color:#28a745;font-size:13px;text-align:center;padding:1rem">✅ Nothing urgent right now!</div>';
+  html += '<div class="dash-card"><h3>🔥 Needs Attention <span>' + actionItems.length + '</span></h3>' + actionHtml + '</div>';
+
+  // ── UPCOMING GROUP CALLS ──────────────────────────
+  var evHtml2 = upcomingEvs.length ? upcomingEvs.slice(0,4).map(function(ev){
+    var dateStr = ev.date ? new Date(ev.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : '';
+    var inv = Object.keys(ev.invites||{}).length;
+    var conf = Object.values(ev.invites||{}).filter(function(s){ return s==='confirmed'||s==='attended'; }).length;
+    return '<div class="call-item"><div class="call-item-name">📅 ' + escHtml(ev.name) + '</div>' +
+      '<div class="call-item-meta">' + dateStr + (ev.time ? ' · ' + ev.time : '') + ' · ' + conf + '/' + inv + ' confirmed</div></div>';
+  }).join('') : '<div style="color:#bbb;font-size:12px;padding:8px 0">No upcoming calls scheduled</div>';
+  html += '<div class="dash-card"><h3>📅 Upcoming Group Calls <span>' + upcomingEvs.length + '</span></h3>' + evHtml2 + '</div>';
+
+  // ── ACTIVE CLIENTS ────────────────────────────────
+  var clHtml2 = clients.length ? clients.map(function(c){
+    var planLbl2 = planLabels3[c.plan]||'📋 Other';
+    var expD = daysUntil(c.expiry);
+    var expTag = expD===null ? '' : expD < 0 ? '<span style="color:#c62828;font-size:10px;font-weight:700">EXPIRED</span>' : expD<=14 ? '<span style="color:#e65100;font-size:10px;font-weight:700">⚠️ '+expD+'d</span>' : '<span style="color:#28a745;font-size:10px">'+expD+'d</span>';
+    return '<div class="client-mini">' +
+      '<div><div style="font-size:13px;font-weight:600">'+escHtml(c.name)+'</div><div style="font-size:10px;color:#888">'+planLbl2+'</div></div>' +
+      '<div style="text-align:right"><div style="font-size:10px;color:#aaa">Renewal</div>' + expTag + '</div></div>';
+  }).join('') : '<div style="color:#bbb;font-size:12px;padding:8px 0">No active clients yet</div>';
+  html += '<div class="dash-card"><h3>⭐ Active Clients <span>' + clients.length + '</span></h3>' + clHtml2 + '</div>';
+
+  // ── LEAD FUNNEL ───────────────────────────────────
+  var funnelSteps2 = [
+    {l:'Total Leads', n:totalLeads, c:'#bbb'},
+    {l:'Chat Sent', n:contacted, c:'#2a4acc'},
+    {l:'Ongoing Chat', n:ongoing, c:'#28a745'},
+    {l:'Invited to Call', n:leads.filter(function(l){ return l.step_invited; }).length, c:'#b5841a'},
+    {l:'Attended Call', n:leads.filter(function(l){ return l.step_attended; }).length, c:'#e65100'},
+    {l:'Offered $97', n:leads.filter(function(l){ return l.step_offered_97; }).length, c:'#6a20c0'},
+    {l:'Signed $97/m', n:r1000, c:'#b5841a'},
+    {l:'Upgraded $12K', n:signed12k, c:'#8a2000'},
+  ];
+  var funnelHtml = funnelSteps2.map(function(s){
+    var pct = totalLeads ? Math.round(s.n/totalLeads*100) : 0;
+    return '<div class="funnel-step"><div class="funnel-lbl">'+s.l+'</div>' +
+      '<div class="funnel-bar"><div class="funnel-fill" style="width:'+pct+'%;background:'+s.c+'"></div></div>' +
+      '<div class="funnel-num">'+s.n+'</div></div>';
+  }).join('');
+  html += '<div class="dash-card"><h3>🔽 Lead Funnel</h3>' + funnelHtml + '</div>';
+
+  // ── CONTENT PIPELINE ──────────────────────────────
+  var contentHtml2 = '';
+  if (contentSched.length) {
+    contentHtml2 += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#2a4acc;margin-bottom:5px">📅 Scheduled</div>';
+    contentSched.slice(0,3).forEach(function(c){
+      var d = c.date ? new Date(c.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+      contentHtml2 += '<div class="action-item"><div class="action-dot" style="background:#2a4acc"></div>' +
+        '<div><div class="action-name">'+escHtml(c.title||'Untitled')+'</div>' +
+        '<div class="action-note">'+escHtml(c.platform||'')+(c.type?' · '+c.type:'')+(d?' · '+d:'')+'</div></div></div>';
+    });
+  }
+  if (contentDraft.length) {
+    contentHtml2 += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin:'+(contentSched.length?'10px':'0')+'px 0 5px">✏️ Drafts</div>';
+    contentDraft.slice(0,3).forEach(function(c){
+      contentHtml2 += '<div class="action-item"><div class="action-dot" style="background:#ccc"></div>' +
+        '<div><div class="action-name">'+escHtml(c.title||'Untitled')+'</div>' +
+        '<div class="action-note">'+escHtml(c.platform||'')+(c.type?' · '+c.type:'')+'</div></div></div>';
+    });
+  }
+  if (!contentHtml2) contentHtml2 = '<div style="color:#bbb;font-size:12px;padding:8px 0">No content in pipeline</div>';
+  html += '<div class="dash-card"><h3>📱 Content Pipeline <span>' + contentItems.length + '</span></h3>' + contentHtml2 + '</div>';
+
+  // ── NURTURE BREAKDOWN ─────────────────────────────
+  var nGroups2 = {};
+  leads.forEach(function(l){ var arr2=Array.isArray(l.nurture_for)?l.nurture_for:(l.nurture_for?[l.nurture_for]:[]); arr2.forEach(function(v){if(v) nGroups2[v]=(nGroups2[v]||0)+1;}); });
+  var nColors2 = {r1000:'#b5841a',unicorn:'#6a0080',rawsome_x:'#8a2000',superva:'#0a4a8a',p1_referral:'#1a5a1a'};
+  var nHtml2 = Object.keys(NURTURE_LABELS).map(function(k){
+    var cnt = nGroups2[k]||0;
+    var pct = totalLeads ? Math.round(cnt/totalLeads*100) : 0;
+    return '<div class="funnel-step"><div class="funnel-lbl">'+NURTURE_LABELS[k]+'</div>' +
+      '<div class="funnel-bar"><div class="funnel-fill" style="width:'+pct+'%;background:'+(nColors2[k]||'#888')+'"></div></div>' +
+      '<div class="funnel-num">'+cnt+'</div></div>';
+  }).join('');
+  html += '<div class="dash-card"><h3>🎯 Nurturing For</h3>' + nHtml2 + '</div>';
+
+  // ── ADMIN & GROUP CHAT COUNTS ────────────────────────
+  var adminCounts2 = {
+    ignite_sent: leads.filter(function(l){ return l.ignite_sent; }).length,
+    in_fb_group: leads.filter(function(l){ return l.in_fb_group; }).length,
+    in_fb_chat:  leads.filter(function(l){ return l.in_fb_chat; }).length,
+  };
+  var gcCounts2 = {
+    gc_ignite:   leads.filter(function(l){ return l.gc_ignite; }).length,
+    gc_love:     leads.filter(function(l){ return l.gc_love; }).length,
+    gc_unicorn:  leads.filter(function(l){ return l.gc_unicorn; }).length,
+    gc_gratitude:leads.filter(function(l){ return l.gc_gratitude; }).length,
+    gc_x:        leads.filter(function(l){ return l.gc_x; }).length,
+  };
+
+  function dRow(label, n, total2, color) {
+    var pct = total2 ? Math.round(n/total2*100) : 0;
+    var c = color||'#b5841a';
+    return '<div class="funnel-step"><div class="funnel-lbl">'+label+'</div>' +
+      '<div class="funnel-bar"><div class="funnel-fill" style="width:'+pct+'%;background:'+c+'"></div></div>' +
+      '<div class="funnel-num">'+n+'</div></div>';
+  }
+
+  // Admin checklist card
+  html += '<div class="dash-card">' +
+    '<h3>⚙️ Admin Checklist <span>' + leads.length + '</span></h3>' +
+    dRow('📧 Welcome Email Sent', adminCounts2.ignite_sent, totalLeads, '#28a745') +
+    dRow('👥 In FB Revolution Group', adminCounts2.in_fb_group, totalLeads, '#2a4acc') +
+    dRow('💬 Joined Group Chat', adminCounts2.in_fb_chat, totalLeads, '#6a20c0') +
+    '<div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#b5841a;letter-spacing:.05em;margin:8px 0 4px">💬 Group Chats</div>' +
+    dRow('🔥 RAWSOME Ignite', gcCounts2.gc_ignite, totalLeads, '#b5841a') +
+    dRow('💛 Love Mastery', gcCounts2.gc_love, totalLeads, '#c04040') +
+    dRow('🙏 Gratitude 365', gcCounts2.gc_gratitude, totalLeads, '#28a745') +
+    dRow('🔥 RAWSOME X WhatsApp', gcCounts2.gc_x, totalLeads, '#8a2000') +
+    '</div>';
+
+  // Nurturing For card
+  var nGroups3 = {};
+  leads.forEach(function(l){ var a=Array.isArray(l.nurture_for)?l.nurture_for:(l.nurture_for?[l.nurture_for]:[]); a.forEach(function(v){if(v)nGroups3[v]=(nGroups3[v]||0)+1;}); });
+  var nColors3 = {r1000:'#b5841a',unicorn:'#6a0080',rawsome_x:'#8a2000',superva:'#0a4a8a',p1_referral:'#1a5a1a'};
+  html += '<div class="dash-card"><h3>🎯 Nurturing For</h3>';
+  Object.keys(NURTURE_LABELS).forEach(function(k){
+    html += dRow(NURTURE_LABELS[k], nGroups3[k]||0, totalLeads, nColors3[k]||'#888');
+  });
+  html += '</div>';
+
+  // Status breakdown card
+  html += '<div class="dash-card"><h3>📊 Pipeline Status</h3>';
+  Object.keys(STATUS_LABELS).forEach(function(s){
+    var cnt = leads.filter(function(l){ return l.status===s; }).length;
+    if (!cnt) return;
+    var c = STATUS_COLORS[s]||'#888';
+    html += dRow(STATUS_LABELS[s], cnt, totalLeads, c);
+  });
+  html += '</div>';
+
+  // Clients detail card
+  html += '<div class="dash-card"><h3>⭐ Client Details</h3>';
+  var planLbls4 = {'97':'🏆 $97/m','r1000':'🏆 $97/m','12k':'💰 $12K','100k':'🔥 $100K','other':'📋 Other'};
+  var planGroups = {};
+  clients.forEach(function(c){ var p=planLbls4[c.plan]||'📋 Other'; planGroups[p]=(planGroups[p]||0)+1; });
+  Object.keys(planGroups).forEach(function(p){ html += dRow(p, planGroups[p], clients.length||1, '#b5841a'); });
+  if (clients.length) {
+    html += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0">';
+    clients.forEach(function(c){
+      var expD = daysUntil(c.expiry);
+      var expStr = expD===null?'—':expD<0?'<span style="color:#c62828;font-weight:700">EXPIRED</span>':expD<=14?'<span style="color:#e65100;font-weight:700">⚠️ '+expD+'d</span>':'<span style="color:#28a745">'+expD+'d</span>';
+      var planLbl = planLbls4[c.plan]||'Other';
+      html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #f0f0f0;font-size:12px">' +
+        '<div><span style="font-weight:600">'+escHtml(c.name)+'</span><span style="color:#aaa;font-size:10px;margin-left:6px">'+planLbl+'</span></div>' +
+        '<div>'+expStr+'</div></div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="color:#bbb;font-size:12px;padding:8px 0">No clients yet</div>';
+  }
+  html += '</div>';
+
+  html += '</div>';
+  document.getElementById('dashContent').innerHTML = html;
+
+  // Event delegation for dashboard buttons
+  var dc = document.getElementById('dashContent');
+  if (dc) {
+    dc.addEventListener('click', function(e) {
+      var tabBtn = e.target.closest('.dash-tab-btn');
+      if (tabBtn) { switchToTab(tabBtn.getAttribute('data-tab')); return; }
+      var addBtn = e.target.closest('.dash-add-lead');
+      if (addBtn) { switchToTab('leads'); setTimeout(openAdd, 100); return; }
+    });
+  }
+}
+
+
+// ── EVENTS (GROUP CALL SCHEDULE) ─────────────────────
+const EV_KEY = 'r1000_events_v1';
+var events = [];
+var DEFAULT_EVENTS = [{"id": "ev1", "name": "Emotional Mastery Call", "date": "2026-05-31", "time": "7:30AM SG / 9:30PM EST", "link": "", "notes": "First Saturday call \u2014 Kenny P1 Award post outreach", "invites": {}}, {"id": "ev2", "name": "1:1 Belief Spotlight \u2014 Andrew Breakthrough", "date": "2026-06-05", "time": "8:00AM SG", "link": "", "notes": "Friday session with Andrew, invited select leads", "invites": {}}, {"id": "ev3", "name": "Rawsome Academy Group Call \u2014 Building Trust / Six Human Needs", "date": "2026-06-20", "time": "7:30AM SG", "link": "", "notes": "June monthly session", "invites": {}}, {"name": "RAWSOME Ignite 1:1 Spotlight - Dott Chu", "date": "2026-07-10", "time": "8:00 AM SG Time", "link": "Kennyzoom.com", "notes": "", "id": "ev_1782973992117", "invites": {"Dott Chu": "confirmed", "Nadezhda Khvorostian": "confirmed", "Promise Gabriel": "confirmed", "Sohayla Smith": "confirmed", "Philippa Holding": "declined", "Twee Shaw": "confirmed", "Ranguru Jeremy": "confirmed", "Daiyan": "confirmed", "Agnes Lim": "confirmed", "Gulnara Magadeyeva": "confirmed", "Jeff Yeo": "maybe", "Emma Lenehan": "confirmed"}}];
+
+var EV_STATUSES = {
+  '':'— Not Invited', 'invited':'📩 Invited', 'confirmed':'✅ Confirmed',
+  'maybe':'🤔 Maybe', 'declined':'❌ Declined', 'attended':'⭐ Attended'
+};
+
+function loadEvents() {
+  try {
+    var raw = localStorage.getItem(EV_KEY);
+    if (raw) {
+      events = JSON.parse(raw);
+      var existingIds = new Set(events.map(function(e){return e.id;}));
+      DEFAULT_EVENTS.forEach(function(de){
+        if (!existingIds.has(de.id)) events.push(de);
+        else {
+          // Patch July 10 event invites
+          var existing = events.find(function(e){ return e.id === de.id; });
+          if (existing && (de.id === 'ev_1782973992117' || de.name.indexOf('Dott Chu') >= 0)) {
+            if (!existing.invites) existing.invites = {};
+            existing.invites['Dott Chu'] = 'confirmed';
+            existing.invites['Nadezhda Khvorostian'] = 'confirmed';
+            existing.invites['Promise Gabriel'] = 'confirmed';
+            existing.invites['Sohayla Smith'] = 'confirmed';
+            existing.invites['Ranguru Jeremy'] = 'confirmed';
+            existing.invites['Twee Shaw'] = 'confirmed';
+            existing.invites['Daiyan'] = 'confirmed';
+            existing.invites['Agnes Lim'] = 'confirmed';
+            existing.invites['Gulnara Magadeyeva'] = 'confirmed';
+            existing.invites['Emma Lenehan'] = 'confirmed';
+            existing.invites['Jeff Yeo'] = 'maybe';
+            existing.invites['Philippa Holding'] = 'declined';
+          }
+        }
+      });
+    } else {
+      events = DEFAULT_EVENTS.slice();
+      saveEvents();
+    }
+  } catch(e) { events = DEFAULT_EVENTS.slice(); }
+}
+
+function saveEvents() {
+  localStorage.setItem(EV_KEY, JSON.stringify(events));
+  showSaved();
+}
+
+function findEvent(id) { return events.find(function(e){ return e.id === id; }); }
+
+function renderEventsTab() {
+  var el = document.getElementById('eventsContent');
+  if (!el) return;
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<div><div style="font-size:17px;font-weight:700">📅 Group Call Schedule</div>' +
+    '<div style="font-size:12px;color:#999;margin-top:2px">Track invites and attendance for each session</div></div>' +
+    '<button class="btn btn-gold" id="addEventBtn">+ Add Session</button></div>';
+
+  var sorted = events.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+  sorted.forEach(function(ev) {
+    var inv = ev.invites || {};
+    var total = Object.keys(inv).length;
+    var confirmed = Object.keys(inv).filter(function(k){ return inv[k]==='confirmed'||inv[k]==='attended'; }).length;
+    var attended = Object.keys(inv).filter(function(k){ return inv[k]==='attended'; }).length;
+    var maybe = Object.keys(inv).filter(function(k){ return inv[k]==='maybe'; }).length;
+    var declined = Object.keys(inv).filter(function(k){ return inv[k]==='declined'; }).length;
+    var dateStr = ev.date ? new Date(ev.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
+    var isUpcoming = ev.date && new Date(ev.date+'T12:00:00') >= new Date();
+
+    html += '<div class="event-card">';
+    html += '<div class="event-header">';
+    html += '<div><div class="event-title">📅 ' + escHtml(ev.name) + '</div>';
+    html += '<div class="event-meta">' + dateStr + (ev.time ? ' &nbsp;·&nbsp; ⏰ ' + escHtml(ev.time) : '') + (ev.link ? ' &nbsp;·&nbsp; <a href="' + escHtml(ev.link) + '" target="_blank" style="color:#b5841a">Join Link</a>' : '') + '</div>';
+    if (ev.notes) html += '<div style="font-size:11px;color:#aaa;margin-top:3px">' + escHtml(ev.notes) + '</div>';
+    html += '</div>';
+    html += '<div class="event-btns">';
+    html += '<button class="btn btn-dark ev-invite-btn" data-evid="' + ev.id + '" style="font-size:11px;padding:6px 12px">👥 Manage Invites</button>';
+    html += '<button class="edit-btn ev-edit-btn" data-evid="' + ev.id + '">✏️</button>';
+    html += '</div></div>';
+    html += '<div class="event-stats">';
+    html += evStat(total,'Invited') + evStat(confirmed,'✅ Confirmed','#1b5e20') + evStat(attended,'⭐ Attended','#b5841a') + evStat(maybe,'🤔 Maybe','#e65100') + evStat(declined,'❌ Declined','#888');
+    html += '</div>';
+    if (total > 0) {
+      html += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#bbb;letter-spacing:.04em;margin-bottom:6px">Invite List</div>';
+      html += '<div class="attendee-grid">';
+      Object.keys(inv).forEach(function(name) {
+        var status = inv[name];
+        var badgeCls = status==='confirmed'?'ev-status-badge ev-confirmed':status==='attended'?'ev-status-badge ev-attended':status==='maybe'?'ev-status-badge ev-maybe':status==='declined'?'ev-status-badge ev-declined':'ev-status-badge ev-invited';
+        html += '<div class="attendee-card"><div class="attendee-name">' + escHtml(name) + '</div><span class="' + badgeCls + '">' + (EV_STATUSES[status]||status) + '</span></div>';
+      });
+      html += '</div>';
+    }
+    var attNames = Object.keys(inv).filter(function(k){ return inv[k]==='attended'; });
+    if (attNames.length) {
+      html += '<div class="attend-section"><div class="attend-section-title">⭐ Attended (' + attNames.length + ')</div>';
+      html += '<div class="attend-list">' + attNames.map(function(n){ return '<div class="attend-chip">⭐ ' + escHtml(n) + '</div>'; }).join('') + '</div></div>';
+    }
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+
+  var addBtn = document.getElementById('addEventBtn');
+  if (addBtn) addBtn.addEventListener('click', openAddEvent);
+
+  el.addEventListener('click', function(e) {
+    var inv2 = e.target.closest('.ev-invite-btn');
+    if (inv2) { openInviteModal(inv2.getAttribute('data-evid')); return; }
+    var edit2 = e.target.closest('.ev-edit-btn');
+    if (edit2) { openEditEvent(edit2.getAttribute('data-evid')); return; }
+  });
+}
+
+function evStat(n, l, c) {
+  return '<div class="ev-stat"><div class="ev-stat-num"' + (c?' style="color:'+c+'"':'') + '>' + n + '</div><div class="ev-stat-lbl">' + l + '</div></div>';
+}
+
+function openAddEvent() {
+  document.getElementById('eventModalTitle').textContent = 'Add New Session';
+  document.getElementById('eMId').value = '';
+  document.getElementById('eMName').value = '';
+  document.getElementById('eMDate').value = '';
+  document.getElementById('eMTime').value = '';
+  document.getElementById('eMLink').value = '';
+  document.getElementById('eMNotes').value = '';
+  document.getElementById('eDelBtn').style.display = 'none';
+  document.getElementById('eventOverlay').style.display = 'flex';
+}
+
+function openEditEvent(id) {
+  var ev = findEvent(id);
+  if (!ev) return;
+  document.getElementById('eventModalTitle').textContent = 'Edit Session';
+  document.getElementById('eMId').value = id;
+  document.getElementById('eMName').value = ev.name||'';
+  document.getElementById('eMDate').value = ev.date||'';
+  document.getElementById('eMTime').value = ev.time||'';
+  document.getElementById('eMLink').value = ev.link||'';
+  document.getElementById('eMNotes').value = ev.notes||'';
+  document.getElementById('eDelBtn').style.display = 'inline-block';
+  document.getElementById('eventOverlay').style.display = 'flex';
+}
+
+function closeEventModal() { document.getElementById('eventOverlay').style.display = 'none'; }
+
+function saveEvent() {
+  var id = document.getElementById('eMId').value;
+  var name = document.getElementById('eMName').value.trim();
+  if (!name) { alert('Please enter a session name'); return; }
+  var data = { name:name, date:document.getElementById('eMDate').value, time:document.getElementById('eMTime').value, link:document.getElementById('eMLink').value, notes:document.getElementById('eMNotes').value };
+  if (id) {
+    var ev = findEvent(id);
+    if (ev) { ev.name=data.name; ev.date=data.date; ev.time=data.time; ev.link=data.link; ev.notes=data.notes; }
+  } else {
+    data.id = 'ev_' + Date.now();
+    data.invites = {};
+    events.push(data);
+  }
+  saveEvents(); closeEventModal(); renderEventsTab();
+}
+
+function deleteEvent() {
+  var id = document.getElementById('eMId').value;
+  if (!id || !confirm('Delete this session?')) return;
+  events = events.filter(function(e){ return e.id !== id; });
+  saveEvents(); closeEventModal(); renderEventsTab();
+}
+
+var currentInviteEventId = '';
+
+function openInviteModal(evId) {
+  var ev = findEvent(evId);
+  if (!ev) return;
+  currentInviteEventId = evId;
+  document.getElementById('inviteModalTitle').textContent = '👥 ' + ev.name;
+  document.getElementById('iMEventId').value = evId;
+  document.getElementById('inviteSearch').value = '';
+  if (document.getElementById('inviteFilter')) document.getElementById('inviteFilter').value = '';
+  renderInviteList();
+  document.getElementById('inviteOverlay').style.display = 'flex';
+}
+
+function closeInviteModal() {
+  document.getElementById('inviteOverlay').style.display = 'none';
+  renderEventsTab();
+}
+
+function setInviteFilter(val, btn) {
+  document.getElementById('inviteFilter').value = val;
+  document.querySelectorAll('#inviteOverlay .fb').forEach(function(b){
+    b.style.borderColor='#ddd'; b.style.color='#777'; b.style.background='#fff'; b.style.fontWeight='';
+  });
+  btn.style.borderColor='#b5841a'; btn.style.color='#b5841a'; btn.style.background='#fffbf2'; btn.style.fontWeight='700';
+  renderInviteList();
+}
+
+function renderInviteList() {
+  var evId = document.getElementById('iMEventId').value;
+  var ev = findEvent(evId);
+  if (!ev) return;
+  var q = (document.getElementById('inviteSearch').value||'').toLowerCase();
+  var filterEl = document.getElementById('inviteFilter');
+  var filterVal = filterEl ? filterEl.value : '';
+  var filtered = leads.filter(function(l){
+    if (q && l.name.toLowerCase().indexOf(q) < 0) return false;
+    var cur = (ev.invites||{})[l.name]||'';
+    if (filterVal==='invited' && !cur) return false;
+    if (filterVal==='attended' && cur!=='attended') return false;
+    if (filterVal==='confirmed' && cur!=='confirmed') return false;
+    return true;
+  });
+  var html = '';
+  filtered.forEach(function(lead) {
+    var current = (ev.invites||{})[lead.name]||'';
+    var attended = current==='attended';
+    var attCls = attended ? 'attend-toggle on att-toggle-btn' : 'attend-toggle att-toggle-btn';
+    var statusOpts = Object.keys(EV_STATUSES).map(function(s){
+      return '<option value="'+s+'"'+(current===s?' selected':'')+'>'+EV_STATUSES[s]+'</option>';
+    }).join('');
+    html += '<div class="invite-item" data-invname="'+escHtml(lead.name)+'" data-evid="'+evId+'">';
+    html += '<div class="invite-item-name">'+escHtml(lead.name)+'</div>';
+    html += '<div style="display:flex;gap:6px;align-items:center">';
+    html += '<select class="invite-status-sel" data-evid="'+evId+'" data-name="'+escHtml(lead.name)+'" onchange="updateInviteStatus(this)">'+statusOpts+'</select>';
+    html += '<div class="'+attCls+'" data-evid="'+evId+'" data-name="'+escHtml(lead.name)+'"><div class="att-box">'+(attended?'&#10003;':'')+'</div>⭐ Attended</div>';
+    html += '</div></div>';
+  });
+  document.getElementById('inviteList').innerHTML = html||'<div class="empty-state">No leads found.</div>';
+}
+
+function updateInviteStatus(sel) {
+  var evId = sel.getAttribute('data-evid');
+  var name = sel.getAttribute('data-name');
+  var status = sel.value;
+  var ev = findEvent(evId);
+  if (!ev) return;
+  if (!ev.invites) ev.invites = {};
+  if (status==='') { delete ev.invites[name]; } else { ev.invites[name]=status; }
+  saveEvents();
+}
+
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.att-toggle-btn');
+  if (!btn) return;
+  var evId = btn.getAttribute('data-evid');
+  var name = btn.getAttribute('data-name');
+  var ev = findEvent(evId);
+  if (!ev) return;
+  if (!ev.invites) ev.invites = {};
+  var cur = ev.invites[name]||'';
+  ev.invites[name] = (cur==='attended') ? 'confirmed' : 'attended';
+  saveEvents();
+  var isNow = ev.invites[name]==='attended';
+  btn.className = isNow ? 'attend-toggle on att-toggle-btn' : 'attend-toggle att-toggle-btn';
+  btn.querySelector('.att-box').innerHTML = isNow ? '&#10003;' : '';
+  var sel = btn.closest('.invite-item');
+  if (sel) { var s = sel.querySelector('.invite-status-sel'); if(s) s.value = ev.invites[name]; }
+});
+
+// ── VA / AFFILIATE LEADS ──────────────────────────────
+const VA_KEY = 'r1000_va_v1';
+var vaLeads = [];
+var VA_DEFAULT = [{"id": "va1", "name": "Terri Vincent", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va2", "name": "Anna Maria Moro", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va3", "name": "Naomi Galliano", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va4", "name": "Rovan Deon", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va_1783100002", "name": "Lisa Chai", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va_1783100004", "name": "Timothy Tan", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}];
+var VA_STATUSES = { new:'🆕 New', reviewing:'👀 Reviewing', shortlisted:'⭐ Shortlisted', interviewing:'💬 Interviewing', offer_sent:'📩 Offer Sent', hired:'✅ Hired', not_fit:'❌ Not a Fit' };
+
+function loadVA() {
+  var NEW_VA_DEFAULTS = [{"id": "va_1783100000", "name": "Naomi Galliano", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va_1783100001", "name": "Rovan Deon", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va_1783100002", "name": "Lisa Chai", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va_1783100003", "name": "Anna Maria Moro", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}, {"id": "va_1783100004", "name": "Timothy Tan", "status": "new", "role": "", "rate": "", "platform": "", "notes": "", "offered": false, "accepted": false, "referred_superva": false, "hired_va": false}];
+  // Migrate short names to full names
+  var NAME_MAP = {
+    'Terri': 'Terri Vincent',
+    'Anna': 'Anna Maria Moro',
+    'Naomi': 'Naomi Galliano',
+    'Rovan': 'Rovan Deon'
+  };
+
+  try {
+    var raw = localStorage.getItem(VA_KEY);
+    if (raw) {
+      vaLeads = JSON.parse(raw);
+      // Update any short names to full names
+      var migrated = false;
+      vaLeads.forEach(function(v) {
+        if (NAME_MAP[v.name]) { v.name = NAME_MAP[v.name]; migrated = true; }
+      });
+      if (migrated) saveVA();
+      var savedNames = new Set(vaLeads.map(function(v){ return v.name.toLowerCase(); }));
+      NEW_VA_DEFAULTS.forEach(function(v) {
+        if (!savedNames.has(v.name.toLowerCase())) vaLeads.push(v);
+      });
+      saveVA();
+    } else {
+      vaLeads = VA_DEFAULT.concat(NEW_VA_DEFAULTS);
+      saveVA();
+    }
+  } catch(e) { vaLeads = VA_DEFAULT.concat(NEW_VA_DEFAULTS); }
+}
+
+function saveVA() { localStorage.setItem(VA_KEY, JSON.stringify(vaLeads)); showSaved(); }
+function findVA(id) { return vaLeads.find(function(v){ return v.id===id; }); }
+
+function renderVATab() {
+  var el = document.getElementById('vaContent');
+  if (!el) return;
+  var hired = vaLeads.filter(function(v){ return v.status==='hired'; }).length;
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+    '<div><div style="font-size:17px;font-weight:700">🌟 Super VA Leads</div></div>' +
+    '<button class="btn btn-gold" id="addVABtn">+ Add Lead</button></div>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:14px">' +
+    '<div class="sbox" style="min-width:80px"><div class="snum">'+vaLeads.length+'</div><div class="slbl">Total</div></div>' +
+    '<div class="sbox" style="min-width:80px"><div class="snum" style="color:#28a745">'+hired+'</div><div class="slbl">✅ Hired</div></div>' +
+    '</div>';
+  vaLeads.forEach(function(va) {
+    var statusColor = {new:'#999',reviewing:'#e65100',shortlisted:'#b5841a',interviewing:'#0d47a1',offer_sent:'#6a20c0',hired:'#28a745',not_fit:'#888'}[va.status]||'#999';
+    html += '<div class="va-card" id="vacard-'+va.id+'">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    html += '<div class="va-name">'+escHtml(va.name)+'</div>';
+    html += '<div style="display:flex;gap:6px;align-items:center">';
+    html += '<span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;background:'+statusColor+'22;color:'+statusColor+'">'+((VA_STATUSES[va.status])||va.status)+'</span>';
+    html += '<button class="edit-btn va-del-btn" data-vaid="'+va.id+'" style="color:#dc3545;border-color:#f0c0c0">🗑</button>';
+    html += '</div></div>';
+    html += '<div class="va-fields">';
+    html += '<div class="va-field"><label>Status</label><select class="va-status-sel" data-vaid="'+va.id+'">'+Object.keys(VA_STATUSES).map(function(s){return '<option value="'+s+'"'+(va.status===s?' selected':'')+'>'+VA_STATUSES[s]+'</option>';}).join('')+'</select></div>';
+    html += '<div class="va-field"><label>Role</label><input type="text" class="va-role-inp" data-vaid="'+va.id+'" value="'+escHtml(va.role||'')+'" placeholder="e.g. Social Media VA"></div>';
+    html += '<div class="va-field"><label>Rate</label><input type="text" class="va-rate-inp" data-vaid="'+va.id+'" value="'+escHtml(va.rate||'')+'" placeholder="e.g. $5/hr"></div>';
+    html += '<div class="va-field"><label>Platform</label><input type="text" class="va-platform-inp" data-vaid="'+va.id+'" value="'+escHtml(va.platform||'')+'" placeholder="e.g. OnlineJobs.ph"></div>';
+    html += '</div>';
+    html += '<div class="va-checks">'+vaChk(va.id,'offered',va.offered,'📩 Offered')+vaChk(va.id,'accepted',va.accepted,'✅ Accepted')+vaChk(va.id,'referred_superva',va.referred_superva,'🌟 Referred to SuperVA')+vaChk(va.id,'hired_va',va.hired_va,'🏆 Hired VA')+'</div>';
+    html += '<textarea class="va-notes va-notes-ta" data-vaid="'+va.id+'" placeholder="Notes...">'+escHtml(va.notes||'')+'</textarea>';
+    html += '<div class="va-flash" id="vaflash-'+va.id+'"></div></div>';
+  });
+  el.innerHTML = html;
+  var addBtn2 = document.getElementById('addVABtn');
+  if (addBtn2) addBtn2.addEventListener('click', addVALead);
+  el.addEventListener('change', function(e) {
+    var vaid = e.target.getAttribute('data-vaid'); if(!vaid) return;
+    var va = findVA(vaid); if(!va) return;
+    if(e.target.classList.contains('va-status-sel')) va.status=e.target.value;
+    if(e.target.classList.contains('va-role-inp')) va.role=e.target.value;
+    if(e.target.classList.contains('va-rate-inp')) va.rate=e.target.value;
+    if(e.target.classList.contains('va-platform-inp')) va.platform=e.target.value;
+    if(e.target.classList.contains('va-notes-ta')) va.notes=e.target.value;
+    saveVA(); vaFlash(vaid);
+  });
+  el.addEventListener('click', function(e) {
+    var del = e.target.closest('.va-del-btn');
+    if(del){ var id=del.getAttribute('data-vaid'); if(confirm('Remove?')){vaLeads=vaLeads.filter(function(v){return v.id!==id;});saveVA();renderVATab();} return; }
+    var chk = e.target.closest('.va-chk');
+    if(chk){ var vaid=chk.getAttribute('data-vaid'); var field=chk.getAttribute('data-field'); var va=findVA(vaid); if(!va)return; va[field]=!va[field]; saveVA(); vaFlash(vaid); chk.className=va[field]?'chk-item ck-green va-chk':'chk-item va-chk'; chk.querySelector('.chk-box').innerHTML=va[field]?'&#10003;':''; }
+  });
+}
+
+function vaChk(id, field, val, label) {
+  var cls = val ? 'chk-item ck-green va-chk' : 'chk-item va-chk';
+  return '<div class="'+cls+'" data-vaid="'+id+'" data-field="'+field+'"><div class="chk-box">'+(val?'&#10003;':'')+'</div>'+label+'</div>';
+}
+
+function vaFlash(id) {
+  var el = document.getElementById('vaflash-'+id);
+  if(el){ el.textContent='✓ Saved'; setTimeout(function(){ el.textContent=''; }, 1500); }
+}
+
+function addVALead() {
+  var name = prompt('Affiliate lead name:');
+  if(!name||!name.trim()) return;
+  vaLeads.push({id:'va_'+Date.now(), name:name.trim(), status:'new', role:'', rate:'', platform:'', notes:'', offered:false, accepted:false, referred_superva:false, hired_va:false});
+  saveVA(); renderVATab();
+}
+
+
+// ── INIT ──────────────────────────────────────────────
+// Event delegation — avoids all quote-escaping issues
+document.getElementById('grid').addEventListener('change', function(e) {
+  var card = e.target.closest('[data-id]');
+  if (!card) return;
+  var id = card.getAttribute('data-id');
+  if (e.target.classList.contains('lead-source-inp')) { var l=findLead(id); if(l){l.lead_source=e.target.value;l.updatedAt=Date.now();save();flash(id);} return; }
+
+  if (e.target.classList.contains('notes-ta')) updateNotes(id, e.target.value);
+});
+
+document.getElementById('grid').addEventListener('click', function(e) {
+  if (e.target.classList.contains('edit-btn')) {
+    var card = e.target.closest('[data-id]');
+    if (card) openEdit(card.getAttribute('data-id'));
+    return;
+  }
+  // Journey stage click — set current stage (marks all previous as done too)
+  var jStage = e.target.closest('.j-stage-item');
+  if (jStage && jStage.closest('#grid')) {
+    var id = jStage.getAttribute('data-id');
+    var clickedField = jStage.getAttribute('data-field');
+    var lead = findLead(id);
+    if (!lead) return;
+    // Find index of clicked stage
+    var clickedIdx = -1;
+    J_STAGES.forEach(function(s,i){ if(s.f===clickedField) clickedIdx=i; });
+    // If clicking the current active stage, clear it (go back one)
+    var currentIdx = -1;
+    J_STAGES.forEach(function(s,i){ if(lead[s.f]) currentIdx=i; });
+    if (clickedIdx === currentIdx) {
+      // Deselect current, go back one
+      lead[clickedField] = false;
+    } else {
+      // Set all stages up to and including clicked as done
+      J_STAGES.forEach(function(s,i){
+        lead[s.f] = (i <= clickedIdx);
+      });
+    }
+    lead.updatedAt = Date.now();
+    save(); flash(id);
+    // Update all stage visuals directly in DOM
+    var card = document.getElementById('card-' + id);
+    if (card) {
+      var newLastDone = -1;
+      J_STAGES.forEach(function(s,i){ if(lead[s.f]) newLastDone=i; });
+      card.querySelectorAll('.j-stage-item').forEach(function(el, i) {
+        var done = !!lead[J_STAGES[i].f];
+        var active = done && (i === newLastDone);
+        el.className = 'j-stage j-stage-item' + (active ? ' j-active' : done ? ' j-done' : '');
+        el.querySelector('.j-num').textContent = done ? '✓' : (i+1);
+      });
+    }
+    return;
+  }
+  // Journey flag toggle
+  var jFlag = e.target.closest('.j-flag-item');
+  if (jFlag && jFlag.closest('#grid')) {
+    var id = jFlag.getAttribute('data-id');
+    var field = jFlag.getAttribute('data-field');
+    var colorCls = jFlag.className.split(' ').find(function(c){ return c.startsWith('jf-') && c !== 'jf-on'; });
+    var lead = findLead(id);
+    if (!lead) return;
+    lead[field] = !lead[field];
+    lead.updatedAt = Date.now();
+    save(); flash(id);
+    if (lead[field]) { jFlag.classList.add('jf-on'); jFlag.querySelector('.jf-box').innerHTML = '&#10003;'; }
+    else { jFlag.classList.remove('jf-on'); jFlag.querySelector('.jf-box').innerHTML = ''; }
+    return;
+  }
+  // Nurture-for checkbox toggle (multi-select array)
+  var nchk = e.target.closest('.nurture-chk');
+  if (nchk && nchk.closest('#grid')) {
+    var id = nchk.getAttribute('data-id');
+    var val = nchk.getAttribute('data-val');
+    var lead = findLead(id);
+    if (!lead) return;
+    var arr = Array.isArray(lead.nurture_for) ? lead.nurture_for : (lead.nurture_for ? [lead.nurture_for] : []);
+    var idx = arr.indexOf(val);
+    if (idx >= 0) { arr.splice(idx,1); nchk.classList.remove('ck-gold'); nchk.querySelector('.chk-box').innerHTML=''; }
+    else { arr.push(val); nchk.classList.add('ck-gold'); nchk.querySelector('.chk-box').innerHTML='&#10003;'; }
+    lead.nurture_for = arr;
+    lead.updatedAt = Date.now();
+    save(); flash(id);
+    return;
+  }
+  // Admin checkbox toggle
+  var chk = e.target.closest('.chk-item');
+  if (chk && chk.closest('#grid')) {
+    var id = chk.getAttribute('data-id');
+    var field = chk.getAttribute('data-field');
+    var color = chk.getAttribute('data-color');
+    var lead = findLead(id);
+    if (!lead) return;
+    lead[field] = !lead[field];
+    lead.updatedAt = Date.now();
+    save();
+    flash(id);
+    if (lead[field]) {
+      chk.classList.add('ck-' + color);
+      chk.querySelector('.chk-box').innerHTML = '&#10003;';
+    } else {
+      chk.classList.remove('ck-green','ck-gold','ck-blue');
+      chk.querySelector('.chk-box').innerHTML = '';
+    }
+  }
+});
+
+loadEvents();
+loadVA();
+loadClients();
+loadContent();
+load();
+renderDashboard();
+
+// Event delegation for events panel
+document.getElementById('eventsContent').addEventListener('click', function(e) {
+  var invBtn = e.target.closest('.ev-invite-btn');
+  if (invBtn) { openInviteModal(invBtn.getAttribute('data-evid')); return; }
+  var editBtn = e.target.closest('.ev-edit-btn');
+  if (editBtn) { openEditEvent(editBtn.getAttribute('data-evid')); return; }
+});
+
+
+// ── SCRIPTS TAB ───────────────────────────────────────
+var SCRIPTS_DATA = [
+  {
+    id: 'l1',
+    level: 'Level 1',
+    title: 'Brand New Leads',
+    color: '#2f9e6f',
+    tagline: 'Entry via Facebook post · Celebrate them first · What they value → the recording',
+    goal: 'Post the video content first. When someone engages, open with ONE specific celebration, find out what landed for them and their challenge, then offer the recording as the answer. (Send steps one at a time.)',
+    steps: [
+      { n:'Step 1', head:'Celebrate + what landed for them',
+        msg:"Hey [Name]! Saw you liked my post, and I also noticed [one specific real thing on their profile/post]. That's so good, congrats 😊🙏\n\nCurious, what was it about that post that spoke to you?",
+        note:"One real, specific celebration. Never 'love your content.' Make them feel seen. Wait for their reply." },
+      { n:'Step 2', head:'Their challenge + how to help',
+        msg:"Ah I get that. Is that something you're working through right now, in your coaching or personally? What's the one thing you'd love to break through?",
+        note:"One question at a time. Let them name it in their own words." },
+      { n:'Step 3', head:'Offer recording → invite',
+        msg:"Okay this is kinda perfect. That post came from a session I recorded, someone breaking through this exact thing, just from the right questions. Want me to send it? I think it'll hit home.\n\n(After they watch) So glad it landed! I'm doing this live on the 25th. Want me to save you a spot? 🙌",
+        note:"Mirror their words when you offer the recording." }
+    ],
+    rules: [
+      'Only reach out to people who actually engaged with the post.',
+      'Always open with one specific celebration.',
+      "Lead with what they value. The recording answers that, it's not a pitch.",
+      'Mirror their words when you offer the recording.'
+    ]
+  },
+  {
+    id: 'l2',
+    level: 'Level 2',
+    title: 'Attended Once Before',
+    color: '#b5841a',
+    tagline: 'Celebrate their last-call moment · What they valued + how to support more → recording',
+    goal: "They've felt the room. Celebrate one specific thing from the last call, ask what they valued most and how you can support them even more, then bridge into the recording and the July 25th seat.",
+    steps: [
+      { n:'Step 1', head:'Celebrate their last-call moment',
+        msg:"Hey [Name]! Been thinking about you since the last call. I loved [one specific thing they shared or their aha moment]. So good, celebrate you for that 😊🙏",
+        note:"A real moment from the last call. Shows you were paying attention to them." },
+      { n:'Step 2', head:'What they valued + how to support more',
+        msg:"What stood out most for you from the call? I ask because I want to support you even more with exactly that.\n\nIs there something I could go deeper on that would help you even more right now?",
+        note:"Their answer is the bridge into the recording. One question at a time." },
+      { n:'Step 3', head:'Offer recording + reveal + invite',
+        msg:"You've felt how I work, so you know this is it. I recorded a full session, and this time I show what's behind it too. Feels spot on for what you just said. Want it? And I've got a live one on the 25th if you're keen 🙌",
+        note:"The behind-the-scenes reveal is the fresh value for returners." }
+    ],
+    rules: [
+      'Open with a specific celebration from the last call.',
+      'Lead with what they valued and how you can help more, before offering anything.',
+      'The behind-the-scenes reveal is the fresh value for returners.',
+      'Tie the recording to their own words before sending.'
+    ]
+  },
+  {
+    id: 'l3',
+    level: 'Level 3',
+    title: 'Invited 3–4×, Never Attends',
+    color: '#8b5cf6',
+    tagline: 'Zero pressure · Celebrate them · Tailor-fit the next session to their needs',
+    goal: "Stop generic invites. Open with warmth and one specific celebration. Ask what they'd most want to break through so you can tailor-fit the next session to them. Even if they don't attend, learning their real needs is the win.",
+    steps: [
+      { n:'Step 1', head:'Celebrate them (one specific thing)',
+        msg:"Hey [Name]! No pressure at all, I know timing's been tricky. Been thinking about you, and I saw [one specific real thing on their profile/post], so good 😊🙏",
+        note:"One specific celebration first, so it feels like appreciation, not another ask." },
+      { n:'Step 2', head:'The bespoke ask',
+        msg:"This month I'm building something special and I want it shaped around real people. If you could break through one thing right now, in your coaching or a relationship, what would it be?",
+        note:"Make them feel 'Kenny is tailoring this for ME.'" },
+      { n:'Step 3', head:'Tailor-fit + offer recording + soft re-invite',
+        msg:"Thanks for that, that helps me a lot, I want to tailor-fit the next session to what you need most. Funny enough, I've already got a recording that's almost exactly this. Want me to send it? And if it clicks, cool if I loop you into the next one? 🙏",
+        note:"Ask permission to re-invite. Keep the door open, no pressure." }
+    ],
+    rules: [
+      "Never send another plain 'come to the session' invite. It's been tried 3–4×.",
+      'Make it about them and tailoring the next session to their needs.',
+      'The insight is the win. You learn their real needs even if they never join.',
+      'Ask permission to re-invite. Keep the door open, no pressure.'
+    ]
+  }
+];
+
+function copyScriptStep(sid, idx, btn) {
+  var s = SCRIPTS_DATA.find(function(x){ return x.id === sid; });
+  if (!s) return;
+  var text = s.steps[idx].msg;
+  var done = function(){
+    var old = btn.textContent;
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(function(){ btn.textContent = old; btn.classList.remove('copied'); }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); });
+  } else { fallbackCopy(text); done(); }
+}
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function renderScriptsTab() {
+  var el = document.getElementById('scriptsContent');
+  if (!el) return;
+  var html = '<div style="margin-bottom:16px">' +
+    '<div style="font-size:17px;font-weight:700">📜 Lead Nurture Scripts / SOP</div>' +
+    '<div style="font-size:12px;color:#999;margin-top:2px">RAWSOME 1000 · SOP · Send steps one at a time · Tap a step to copy it</div>' +
+    '</div>';
+
+  html += '<div class="scripts-tabs">';
+  SCRIPTS_DATA.forEach(function(s, i){
+    html += '<button class="scriptpill' + (i===0?' on':'') + '" data-target="script-' + s.id + '" style="--sc:' + s.color + '">' +
+      s.level + ' · ' + escHtml(s.title) + '</button>';
+  });
+  html += '</div>';
+
+  SCRIPTS_DATA.forEach(function(s, i){
+    html += '<div class="script-block' + (i===0?' on':'') + '" id="script-' + s.id + '">';
+    html += '<div class="script-card" style="border-top:4px solid ' + s.color + '">';
+    html += '<div class="script-head">' +
+      '<span class="script-level" style="background:' + s.color + '22;color:' + s.color + '">' + s.level + '</span>' +
+      '<span class="script-title">' + escHtml(s.title) + '</span></div>';
+    html += '<div class="script-tagline">' + escHtml(s.tagline) + '</div>';
+    html += '<div class="script-goal"><b>Goal:</b> ' + escHtml(s.goal) + '</div>';
+
+    s.steps.forEach(function(st, idx){
+      html += '<div class="script-step">' +
+        '<div class="script-step-head">' +
+          '<span class="script-step-n" style="color:' + s.color + '">' + st.n + '</span>' +
+          '<span class="script-step-title">' + escHtml(st.head) + '</span>' +
+          '<button class="script-copy" onclick="copyScriptStep(\'' + s.id + '\',' + idx + ',this)">📋 Copy</button>' +
+        '</div>' +
+        '<div class="script-msg">' + escHtml(st.msg).replace(/\n/g,'<br>') + '</div>' +
+        '<div class="script-note">↳ ' + escHtml(st.note) + '</div>' +
+      '</div>';
+    });
+
+    html += '<div class="script-rules"><div class="script-rules-h">⚡ Kenny\'s Rules — read before sending</div><ul>';
+    s.rules.forEach(function(r){ html += '<li>' + escHtml(r) + '</li>'; });
+    html += '</ul></div>';
+
+    html += '</div></div>';
+  });
+
+  el.innerHTML = html;
+
+  // pill switching
+  el.querySelectorAll('.scriptpill').forEach(function(p){
+    p.addEventListener('click', function(){
+      var tgt = p.getAttribute('data-target');
+      el.querySelectorAll('.scriptpill').forEach(function(x){ x.classList.remove('on'); });
+      el.querySelectorAll('.script-block').forEach(function(x){ x.classList.remove('on'); });
+      p.classList.add('on');
+      var blk = document.getElementById(tgt); if (blk) blk.classList.add('on');
+    });
+  });
+}
+
+</script>
+</body>
+</html>
