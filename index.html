@@ -482,6 +482,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cad-banner-tier{font-size:11px;font-weight:800;color:#fff;padding:2px 9px;border-radius:20px}
 .cad-banner-touch{font-size:12.5px;font-weight:800}
 .cad-banner-goal{font-size:11.5px;color:#555;line-height:1.4}
+
+.goal-card{background:linear-gradient(135deg,#fffdf7,#fff8ea);border:1.5px solid #e8d9b0;border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.goal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.goal-title{font-size:16px;font-weight:800;color:#7a5010}
+.goal-sub{font-size:12.5px;color:#a07030;margin-top:3px}
+.goal-status{font-size:12px;font-weight:800;padding:5px 12px;border-radius:20px;white-space:nowrap}
+.goal-bar{position:relative;height:20px;background:#efe6d0;border-radius:10px;overflow:visible;margin-bottom:6px}
+.goal-fill{height:100%;background:linear-gradient(90deg,#e0a92e,#1d9e75);border-radius:10px;transition:width .4s}
+.goal-target-mark{position:absolute;top:-3px;width:3px;height:26px;background:#c0392b;border-radius:2px}
+.goal-bar-labels{display:flex;justify-content:space-between;font-size:10.5px;color:#a07030;margin-bottom:14px}
+.goal-pace{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.goal-pace-box{text-align:center;background:#fff;border:1px solid #ecdcb8;border-radius:10px;padding:8px 16px}
+.gpb-n{font-size:22px;font-weight:800;color:#1d9e75}
+.gpb-l{font-size:10px;color:#a07030;text-transform:uppercase;letter-spacing:.05em}
+.goal-ramp{display:flex;gap:6px;flex:1;min-width:220px}
+.grp{flex:1;text-align:center;background:#fff;border:1px solid #ecdcb8;border-radius:8px;padding:6px 2px}
+.grp-hit{background:#e6f6ef;border-color:#1d9e7555}
+.grp-m{font-size:10px;color:#a07030;font-weight:700}
+.grp-n{font-size:14px;font-weight:800;color:#7a5010}
+.grp-hit .grp-n{color:#1d9e75}
 </style>
 </head>
 <body>
@@ -491,6 +511,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="save-badge" id="saveBadge"></div>
   <div class="topbar-btns">
     <button class="btn btn-dark" onclick="syncUpdates()">🔄 Reload Latest Data</button>
+    <button class="btn btn-dark" onclick="removeDuplicates()">🧹 Remove Duplicates</button>
     <button class="btn btn-dark" onclick="exportBackup()">⬇️ Backup</button>
     <button class="btn btn-gold" onclick="openAdd()">+ Add Lead</button>
   </div>
@@ -700,7 +721,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 const STORAGE_KEY = 'r1000_leads_v3';
 // Bump this whenever seed data (INITIAL) is updated so browsers refresh fields from seeds.
-const DATA_VERSION = '2026-08-13-dedup'
+const DATA_VERSION = '2026-08-13-goal';
 const DATA_VERSION_KEY = 'r1000_data_version';
 // Simplified pipeline — in sequence order
 const STATUS_LABELS = {
@@ -829,6 +850,45 @@ function exportBackup() {
 
 // Re-applies the latest known updates to whatever is in saved data.
 // Fixes cases where the saved copy is out of sync (e.g. Conversions showing 2 not 3).
+function removeDuplicates() {
+  // Merge any leads sharing the same normalized name into one record (no data lost).
+  function norm(s){ return (s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+  var byName = {}, order = [], dupCount = 0;
+  leads.forEach(function(l){
+    var k = norm(l.name);
+    if (!byName[k]) { byName[k] = l; order.push(k); }
+    else {
+      dupCount++;
+      var m = byName[k];
+      Object.keys(l).forEach(function(key){
+        if (key === 'id' || key === 'name') return;
+        var v = l[key];
+        if (typeof v === 'boolean') { m[key] = m[key] || v; }
+        else if (key === 'nurture_for') {
+          var pa = Array.isArray(m.nurture_for) ? m.nurture_for : (m.nurture_for ? [m.nurture_for] : []);
+          var da = Array.isArray(v) ? v : (v ? [v] : []);
+          m.nurture_for = pa.concat(da.filter(function(x){ return pa.indexOf(x) < 0; }));
+        }
+        else if (key === 'notes') {
+          var pn = m.notes || '';
+          if (v && pn.indexOf(v) < 0) m.notes = (pn + (pn.trim() ? '\n' : '') + v).trim();
+        }
+        else if ((m[key] === undefined || m[key] === null || m[key] === '' || m[key] === false) &&
+                 (v !== undefined && v !== null && v !== '' && v !== false)) {
+          m[key] = v;
+        }
+      });
+    }
+  });
+  if (dupCount === 0) { alert('✅ No duplicates found — your ' + leads.length + ' leads are all unique.'); return; }
+  var before = leads.length;
+  leads = order.map(function(k){ return byName[k]; });
+  save();
+  render(); renderStats();
+  if (typeof renderDashboard === 'function') renderDashboard();
+  alert('🧹 Removed ' + dupCount + ' duplicate record' + (dupCount===1?'':'s') + '.\n\nLeads: ' + before + ' → ' + leads.length + '\n(All flags, notes, and tags from duplicates were merged in — nothing lost.)');
+}
+
 function syncUpdates() {
   if (!confirm('Reload the latest data into this browser?\n\nThis refreshes leads, recordings, tiers, journey stages, FB-group flags, and nurture tags from the current file. Your data will match the latest version.')) return;
   var seedByName = {};
@@ -1837,7 +1897,39 @@ function renderDashboard() {
 
   var html = '';
 
-  // Today banner
+  // ── SIGNUPS GOAL TRACKER (150 by Dec 31, 2026) ──
+  (function(){
+    var GOAL = 150;
+    var current = leads.filter(function(l){ return l.step_r1000; }).length;
+    var end = new Date(2026,11,31);
+    var nowd = new Date();
+    var ramp = [ {m:'Aug',cum:10},{m:'Sep',cum:30},{m:'Oct',cum:60},{m:'Nov',cum:100},{m:'Dec',cum:150} ];
+    var mo = nowd.getMonth();
+    var expectedNow = mo<=7?10 : mo===8?30 : mo===9?60 : mo===10?100 : 150;
+    var weeksLeft = Math.max(1, Math.round((end - nowd)/(7*864e5)));
+    var perWeek = Math.max(0, Math.ceil((GOAL - current)/weeksLeft));
+    var perMonth = Math.max(0, Math.ceil((GOAL - current)/Math.max(1,(weeksLeft/4.33))));
+    var pct = Math.min(100, Math.round(current/GOAL*100));
+    var onTrack = current >= expectedNow;
+    var statusCol = onTrack ? '#1d9e75' : '#c0392b';
+    var statusTxt = onTrack ? '✅ On track' : '⚠️ Behind pace';
+    html += '<div class="goal-card">';
+    html += '<div class="goal-top"><div><div class="goal-title">🎯 Goal: 150 $97/m signups by Dec 31</div>' +
+      '<div class="goal-sub">At <b>' + current + '</b> · need <b>' + Math.max(0,GOAL-current) + '</b> more in ~' + weeksLeft + ' weeks</div></div>' +
+      '<div class="goal-status" style="background:' + statusCol + '22;color:' + statusCol + '">' + statusTxt + '</div></div>';
+    html += '<div class="goal-bar"><div class="goal-fill" style="width:' + pct + '%"></div>' +
+      '<div class="goal-target-mark" style="left:' + Math.min(100,Math.round(expectedNow/GOAL*100)) + '%"></div></div>';
+    html += '<div class="goal-bar-labels"><span>' + current + ' now (' + pct + '%)</span><span>target now: ' + expectedNow + '</span><span>150 goal</span></div>';
+    html += '<div class="goal-pace"><div class="goal-pace-box"><div class="gpb-n">' + perWeek + '</div><div class="gpb-l">per week</div></div>' +
+      '<div class="goal-pace-box"><div class="gpb-n">' + perMonth + '</div><div class="gpb-l">per month</div></div>';
+    html += '<div class="goal-ramp">';
+    ramp.forEach(function(r){
+      var hit = current >= r.cum;
+      html += '<div class="grp' + (hit?' grp-hit':'') + '"><div class="grp-m">' + r.m + '</div><div class="grp-n">' + r.cum + '</div></div>';
+    });
+    html += '</div></div></div>';
+  })();
+
   html += '<div class="today-banner">' +
     '<div><div style="font-size:13px;font-weight:700;color:#7a5010">📅 ' + today + '</div>' +
     '<div style="font-size:11px;color:#a07020;margin-top:2px">Your RAWSOME MISSION CONTROL — everything in one place 💛</div></div>' +
