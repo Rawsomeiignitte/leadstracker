@@ -502,6 +502,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .grp-m{font-size:10px;color:#a07030;font-weight:700}
 .grp-n{font-size:14px;font-weight:800;color:#7a5010}
 .grp-hit .grp-n{color:#1d9e75}
+
+.audit-callout{background:linear-gradient(135deg,#fff3f0,#ffe9e2);border:1.5px solid #e8b4a5;border-radius:14px;padding:16px 20px;margin-bottom:16px}
+.ac-head{font-size:16px;font-weight:800;color:#c0392b;margin-bottom:5px}
+.ac-body{font-size:12px;color:#8a4535;line-height:1.5;margin-bottom:12px}
+.ac-nums{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}
+.ac-num{background:#fff;border:1px solid #e8c4b8;border-radius:10px;padding:8px 18px;text-align:center}
+.ac-num-hot{background:#c0392b;border-color:#c0392b}
+.ac-num-hot .acn-n,.ac-num-hot .acn-l{color:#fff}
+.acn-n{font-size:26px;font-weight:800;color:#c0392b}
+.acn-l{font-size:10px;color:#a05545;text-transform:uppercase;letter-spacing:.04em}
+.scoreboard{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+.scoreboard th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#999;padding:5px 8px;border-bottom:2px solid #eee}
+.scoreboard td{padding:6px 8px;border-bottom:1px solid #f2f0ea;color:#666;text-align:center}
+.scoreboard .sb-lbl{text-align:left;font-weight:600;color:#333}
+.scoreboard .sb-owner{text-align:left;font-size:10.5px;color:#b5841a;font-weight:700}
+.scoreboard .sb-cur{font-weight:800;color:#2c2f86;background:#f5f6ff}
+.scoreboard .sb-goal{font-weight:800;color:#1d9e75}
+.sb-note{font-size:11px;color:#7a5010;background:#fdf8ec;border-radius:8px;padding:9px 12px;margin-top:10px;line-height:1.5}
+
+.sop-section{background:#fff;border:1px solid #e8e4da;border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.sop-section-h{font-size:15px;font-weight:800;color:#2c2f86;margin-bottom:12px}
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.lane{background:#fafaf8;border:1px solid #ececec;border-radius:10px;padding:12px}
+.lane-name{font-size:12px;font-weight:800;margin-bottom:5px}
+.lane-scope{font-size:11px;color:#666;line-height:1.45;margin-bottom:8px}
+.lane-metrics{font-size:11px;font-weight:700;color:#333}
+.pillars{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pillar{background:#fafaf8;border:1px solid #ececec;border-radius:8px;padding:10px 12px}
+.pillar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.pillar-name{font-size:12.5px;font-weight:800;color:#222}
+.pillar-pct{font-size:12px;font-weight:800;color:#b5841a}
+.pillar-desc{font-size:10.8px;color:#666;line-height:1.45}
+.sop-note{font-size:11px;color:#7a5010;background:#fdf8ec;border:1px solid #f0e4c8;border-radius:8px;padding:9px 12px;margin-top:10px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -721,7 +754,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 const STORAGE_KEY = 'r1000_leads_v3';
 // Bump this whenever seed data (INITIAL) is updated so browsers refresh fields from seeds.
-const DATA_VERSION = '2026-08-13-goal';
+const DATA_VERSION = '2026-08-17-audit';
 const DATA_VERSION_KEY = 'r1000_data_version';
 // Simplified pipeline — in sequence order
 const STATUS_LABELS = {
@@ -1936,6 +1969,53 @@ function renderDashboard() {
     '<button class="btn btn-gold btn-sm" onclick="renderDashboard()" style="font-size:11px;padding:6px 14px">🔄 Refresh</button>' +
     '</div>';
 
+  // ── PRIORITY #1: THE UNWORKED LEADS (from the audit) ──
+  (function(){
+    var noChat = leads.filter(function(l){ return !l.step_chat_sent; }).length;
+    var inGroupNoChat = leads.filter(function(l){ return l.in_fb_group && !l.step_chat_sent; }).length;
+    html += '<div class="audit-callout">' +
+      '<div class="ac-head">🚨 Priority #1 — Message the unworked leads</div>' +
+      '<div class="ac-body">We don\'t have a closing problem, we have a <b>starting</b> problem. These leads raised their hand and were never spoken to. Working them at current rates ≈ doubles membership with zero new content.</div>' +
+      '<div class="ac-nums">' +
+      '<div class="ac-num"><div class="acn-n">' + noChat + '</div><div class="acn-l">never chatted</div></div>' +
+      '<div class="ac-num ac-num-hot"><div class="acn-n">' + inGroupNoChat + '</div><div class="acn-l">in our group, never messaged</div></div>' +
+      '<button class="btn btn-gold btn-sm" onclick="showTab(\'list\',document.querySelector(&quot;[onclick*=\\\'list\\\']&quot;))" style="align-self:center">Work the list →</button>' +
+      '</div></div>';
+  })();
+
+  // ── THE SCOREBOARD (what we track — from the audit) ──
+  (function(){
+    var noChat = leads.filter(function(l){ return !l.step_chat_sent; }).length;
+    var chatSent = leads.filter(function(l){ return l.step_chat_sent; }).length;
+    var invited = leads.filter(function(l){ return l.step_invited; }).length;
+    var attended = leads.filter(function(l){ return l.step_attended; }).length;
+    var offered = leads.filter(function(l){ return l.step_offered_97; }).length;
+    var chatToInvite = chatSent ? Math.round(invited/chatSent*100) : 0;
+    var attToOffer = attended ? Math.round(offered/attended*100) : 0;
+    // rows: label, owner, today, d30, d90, current-value
+    var rows = [
+      ['📥 Saves / month','Nigel','~3','15','30','—'],
+      ['🔁 Shares / month','Nigel','~16','40','80','—'],
+      ['💬 Keyword comments / post','Nigel','0','5','15','—'],
+      ['✉️ DM chats started / week','Crystel','~0','10','25','—'],
+      ['🚫 Leads with no chat','Crystel','108','40','0', String(noChat)],
+      ['➡️ Chat → invited rate','Crystel','26%','35%','50%', chatToInvite+'%'],
+      ['🎯 Attended → offered rate','Kenny','58%','80%','100%', attToOffer+'%'],
+      ['👥 Group daily-active','Crystel','6','15','40','—'],
+      ['📣 FB group joins / month','Nigel','23','35','60','—']
+    ];
+    var rowsHtml = rows.map(function(r){
+      return '<tr><td class="sb-lbl">'+r[0]+'</td><td class="sb-owner">'+r[1]+'</td>' +
+        '<td class="sb-cur">'+r[5]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td class="sb-goal">'+r[4]+'</td></tr>';
+    }).join('');
+    html += '<div class="dash-card" style="margin-bottom:16px"><h3>📊 The Scoreboard <span style="font-size:11px;font-weight:500;color:#999">— we track what a human chose to do, not what the algorithm showed</span></h3>' +
+      '<table class="scoreboard"><thead><tr><th>Metric</th><th>Owner</th><th>Now</th><th>Day 30</th><th>Day 60</th><th>Day 90</th></tr></thead><tbody>' +
+      rowsHtml + '</tbody></table>' +
+      '<div class="sb-note">⭐ The one number that matters most: <b>Saves</b>. Earliest signal a stranger found you <i>useful</i>, not just pleasant. If saves move, everything downstream follows.</div>' +
+      '</div>';
+  })();
+
+
   // ── TODAY'S MEETING FOCUS (day-theme aware) ─────────
   try {
     var _dow = now.getDay();
@@ -2933,6 +3013,37 @@ function renderScriptsTab() {
     '<div style="font-size:12px;color:#999;margin-top:2px">RAWSOME 1000 · SOP · Send steps one at a time · Tap a step to copy it</div>' +
     '</div>';
 
+  // ── TEAM OPERATING SYSTEM — three lanes ──
+  html += '<div class="sop-section"><div class="sop-section-h">👥 Team Operating System — three lanes, one funnel</div>' +
+    '<div class="lanes">' +
+    '<div class="lane" style="border-top:3px solid #2f9e6f"><div class="lane-name" style="color:#2f9e6f">NIGEL — Did the content work?</div>' +
+    '<div class="lane-scope">Everything <b>up to</b> the hand going up. Creates, edits, designs carousels, schedules, publishes.</div>' +
+    '<div class="lane-metrics">📥 Saves · 🔁 Shares · 💬 Keyword comments</div></div>' +
+    '<div class="lane" style="border-top:3px solid #b5841a"><div class="lane-name" style="color:#b5841a">CRYSTEL — Did we answer?</div>' +
+    '<div class="lane-scope">Everything <b>after</b> the hand goes up. Comments, DMs, keyword fulfilment, group welcomes, Mission Control. Nobody who reaches out waits.</div>' +
+    '<div class="lane-metrics">✉️ DM chats started · 🚫 Leads with no chat</div></div>' +
+    '<div class="lane" style="border-top:3px solid #c0392b"><div class="lane-name" style="color:#c0392b">KENNY — Did we ask?</div>' +
+    '<div class="lane-scope">The moment it becomes money. The 20 minutes/day, group replies, and making the offer.</div>' +
+    '<div class="lane-metrics">🎯 Attended → offered → closed</div></div>' +
+    '</div>' +
+    '<div class="sop-note">The handoff line: everything before someone reaches out is <b>Nigel</b>. Everything after is <b>Crystel</b>. Kenny owns the ask.</div></div>';
+
+  // ── CONTENT PILLARS ──
+  html += '<div class="sop-section"><div class="sop-section-h">📝 Content Pillars — every post belongs to exactly one</div>' +
+    '<div class="pillars">' +
+    '<div class="pillar" style="border-left:4px solid #c0392b"><div class="pillar-top"><span class="pillar-name">The Shame Reframe</span><span class="pillar-pct">40%</span></div>' +
+    '<div class="pillar-desc">Your proven winner (2.3× views, 4× shares). Name the feeling they\'re ashamed of → reveal what it actually means. This is the growth engine.</div></div>' +
+    '<div class="pillar" style="border-left:4px solid #b5841a"><div class="pillar-top"><span class="pillar-name">Seen and Stayed</span><span class="pillar-pct">25%</span></div>' +
+    '<div class="pillar-desc">Real stories of being witnessed and not abandoned. Rule: every story ends on a line that generalises to the reader — or it\'s just a diary.</div></div>' +
+    '<div class="pillar" style="border-left:4px solid #2f9e6f"><div class="pillar-top"><span class="pillar-name">The Keepable</span><span class="pillar-pct">20%</span></div>' +
+    '<div class="pillar-desc">The missing pillar. One save-worthy asset/week: a list, framework, or script. Always say "save this." Target: 30 saves/month.</div></div>' +
+    '<div class="pillar" style="border-left:4px solid #2c2f86"><div class="pillar-top"><span class="pillar-name">Proof</span><span class="pillar-pct">15%</span></div>' +
+    '<div class="pillar-desc">Client transformations. Always name the <i>before</i> feeling, not just the after. (Your Ksenia testimonial had your highest share rate all year.)</div></div>' +
+    '</div>' +
+    '<div class="sop-note">📣 <b>Keyword-DM funnel:</b> Stop sending people to a link. Ask them to comment a word → "Comment RAWSOME and I\'ll send it." Then DM the asset (no pitch), ask one real question 24h later, listen, invite to group only when natural. Do NOT automate — at your size, personal presence is the edge.</div>' +
+    '<div class="sop-note" style="background:#fdf0ee;border-color:#e8c4b8;color:#8a4535">🚫 <b>Format rules (non-negotiable):</b> No reel over 60s (target 15–30s). Photo + long caption is your hero format. Every caption ends in a question. Every Keepable says "save this." Kill Gratitude365 as long-form video. Post 06:00–09:00 SGT (hits AU morning + US evening).</div>' +
+    '</div>';
+
   html += '<div class="seq-strategy">' +
     '<div class="seq-strategy-h">🎯 Core Sequence — Recording First, Then Group Session</div>' +
     '<div class="seq-strategy-body">Lead with the <b>spotlight recording</b>, not the live invite. The recording is a near-zero-cost yes that delivers proof before you ask for anything big — it earns the right to invite them to the next group session. Tie the recording to a challenge <b>they just named</b> (mirror their words), let them watch, then invite to the live session as the next step. Keep the next session date as your urgency lever for anyone who watches but stalls.' +
@@ -3248,18 +3359,24 @@ function renderCadenceTab() {
 
   var html = '<div style="margin-bottom:14px">' +
     '<div style="font-size:17px;font-weight:700">📣 Social Cadence</div>' +
-    '<div style="font-size:12px;color:#999;margin-top:2px">Warmer leads, more attention. Just work each list top-to-bottom, Tier 3 first. No counting, no weekly reset.</div></div>';
+    '<div style="font-size:12px;color:#999;margin-top:2px">Warmer leads, more attention. Work Tier 1 first, then Tier 2. Tier 3 is a monthly broadcast only.</div></div>';
+
+  // Audit fix banner
+  html += '<div style="background:#fdf8ec;border:1px solid #f0e4c8;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:11.5px;color:#7a5010;line-height:1.5">' +
+    '<b>⚡ The cadence fix (from the audit):</b> The old plan needed 276 touches/week — no small team sustains that, so the list silts up and the warmest new leads go untouched. ' +
+    '<b>New rule: work Tier 1 + Tier 2 only (~94 touches/week).</b> Tier 3 (cold) gets ONE monthly group broadcast, not weekly 1:1 touches. A cold lead poked weekly by an exhausted VA converts worse than one left alone.</div>';
 
   CADENCE_TIERS.forEach(function(t){
     var list = buckets[t.n];
     var open = !cadenceCollapse[t.key];
-    html += '<div class="cad-tier" style="border-top:3px solid ' + t.col + '">';
+    var isCold = (t.n === 3);
+    html += '<div class="cad-tier" style="border-top:3px solid ' + t.col + (isCold?';opacity:.75':'') + '">';
     html += '<div class="cad-head" onclick="cadenceCollapse[\'' + t.key + '\']=' + open + ';renderCadenceTab()">' +
-      '<div><div class="cad-title" style="color:' + t.col + '">' + t.title + '</div>' +
-      '<div class="cad-goal">' + t.goal + ' · <b>' + t.target + '\u00d7/week</b></div></div>' +
+      '<div><div class="cad-title" style="color:' + t.col + '">' + t.title + (isCold?' · 📢 monthly broadcast only':'') + '</div>' +
+      '<div class="cad-goal">' + (isCold ? 'Don\'t work these 1:1 — send ONE group broadcast per month' : t.goal + ' · <b>' + t.target + '\u00d7/week</b>') + '</div></div>' +
       '<div class="cad-count" style="background:' + t.bg + ';color:' + t.col + '">' + list.length + ' leads</div>' +
       '</div>';
-    if (open) {
+    if (open && !isCold) {
       if (!list.length) {
         html += '<div class="cad-empty">No leads in this tier right now.</div>';
       } else {
@@ -3276,8 +3393,8 @@ function renderCadenceTab() {
     html += '</div>';
   });
 
-  html += '<div class="cad-foot">Tiers sort automatically from each lead\u2019s stage (in FB group? watched a recording?), warmest lead first. ' +
-    'Nigel just starts at Tier 3 and works down \u2014 the warmest leads naturally get the most attention. Nothing to tick or reset.</div>';
+  html += '<div class="cad-foot">Work <b>Tier 1</b> then <b>Tier 2</b> top-to-bottom (warmest first) — that\u2019s ~94 touches/week, sustainable for the team. ' +
+    '<b>Tier 3 (cold)</b> gets one monthly group broadcast, not individual touches. Focus your energy where it converts.</div>';
 
   el.innerHTML = html;
 }
